@@ -4,6 +4,17 @@
 <meta charset='UTF-8'/>
 <meta content='width=device-width, initial-scale=1.0' name='viewport'/>
 <title>WEAVE ESPORTS</title>
+<script>
+window.showErr = function (msg) {
+  try {
+    var d = document.getElementById('err-bar');
+    if (!d) { d = document.createElement('div'); d.id = 'err-bar'; d.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#b91c1c;color:#fff;font:12px/1.4 sans-serif;padding:8px 10px;white-space:pre-wrap;max-height:35vh;overflow:auto'; (document.body || document.documentElement).appendChild(d); }
+    d.textContent += msg + '\n';
+  } catch (x) {}
+};
+window.addEventListener('error', function (e) { window.showErr('ত্রুটি: ' + (e.message || 'unknown') + (e.lineno ? ' (লাইন ' + e.lineno + ')' : '')); });
+window.addEventListener('unhandledrejection', function (e) { window.showErr('ত্রুটি: ' + ((e.reason && e.reason.message) || e.reason)); });
+</script>
 <link crossorigin='anonymous' href='https://www.gstatic.com' rel='preconnect'/>
 <link crossorigin='anonymous' href='https://cdnjs.cloudflare.com' rel='preconnect'/>
 <meta content='WEAVE ESPORTS' property='og:title'/>
@@ -155,6 +166,7 @@ z-index: 10;
 </div>
 <div id='dynamic-categories'>
 </div>
+<div style='text-align:center; color:#475569; font-size:10px; margin:24px 0 10px;'>সংস্করণ v2026.10.19-b</div>
 </div>
 </div>
 <div id='match-view' style='display:none;'>
@@ -435,6 +447,7 @@ z-index: 10;
         }
         const db = firebase.database();
         firebase.auth().getRedirectResult().catch(function() {});
+        ['appSettings', 'categories', 'matches'].forEach(function(p) { db.ref(p).once('value').catch(function(e) { window.showErr('Database পড়া যায়নি (' + p + '): ' + e.message + ' — Rules Publish করা আছে কি দেখুন'); }); });
         
         document.addEventListener('click', function(e) {
             if (e.target.tagName === 'BUTTON' || e.target.classList.contains('cat-card') || e.target.classList.contains('sub-btn')) {
@@ -1470,18 +1483,4 @@ z-index: 10;
                     if (r.uid === currentUser.uid || r.userId === currentUser.uid) {
                         found = true;
                         
-                        let cancelStatusHtml = '';
-                        let actionBtns = '';
-                        
-                        let cStatus = r.cancelStatus || '';
-                        let cStatLow = cStatus.toLowerCase();
-                        
-                        if (cStatLow === 'pending') {
-                            cancelStatusHtml = `<span style="background: #facc15; color: #000; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">Cancel Pending</span>`;
-                        } else if (cStatLow.includes('reject') || cStatLow.includes('রিজেক্ট')) {
-                            cancelStatusHtml = `<span style="background: #ef4444; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">Cancel Rejected</span>`;
-                        }
-                        
-                        if (!cStatus || cStatLow.includes('reject') || cStatLow.includes('রিজেক্ট')) {
-                            actionBtns = `
-                                <button onclick="editSlot('${matchId}', '${child.key}', '${r.team}', '${r.playerLength ||
+        
