@@ -1,0 +1,2576 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='UTF-8'/>
+<meta content='width=device-width, initial-scale=1.0' name='viewport'/>
+<title>WEAVE ESPORTS</title>
+<script>
+window.showErr = function (msg) {
+  try {
+    var d = document.getElementById('err-bar');
+    if (!d) { d = document.createElement('div'); d.id = 'err-bar'; d.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#b91c1c;color:#fff;font:12px/1.4 sans-serif;padding:8px 10px;white-space:pre-wrap;max-height:35vh;overflow:auto'; (document.body || document.documentElement).appendChild(d); }
+    d.textContent += msg + '\n';
+  } catch (x) {}
+};
+setTimeout(function () { if (!window.__ready) window.showErr('সাইটের ডেটা ৮ সেকেন্ডেও আসেনি। ' + (typeof firebase === 'undefined' ? 'Firebase লাইব্রেরি লোড হয়নি (ইন্টারনেট/অ্যাড-ব্লকার চেক করুন)।' : 'Firebase আছে, কিন্তু Database সাড়া দিচ্ছে না (ইন্টারনেট বা Rules)।')); }, 8000);
+window.addEventListener('error', function (e) { window.showErr('ত্রুটি: ' + (e.message || 'unknown') + (e.lineno ? ' (লাইন ' + e.lineno + ')' : '')); });
+window.addEventListener('unhandledrejection', function (e) { window.showErr('ত্রুটি: ' + ((e.reason && e.reason.message) || e.reason)); });
+</script>
+<link crossorigin='anonymous' href='https://www.gstatic.com' rel='preconnect'/>
+<link crossorigin='anonymous' href='https://cdnjs.cloudflare.com' rel='preconnect'/>
+<meta content='WEAVE ESPORTS' property='og:title'/>
+<meta content='' property='og:description'/>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css' rel='stylesheet'/>
+<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
+<script src='https://accounts.google.com/gsi/client' async defer></script>
+<script src='https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js'></script>
+<script src='https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js'></script>
+<script src='https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js'></script>
+<style id='page-skin-1' type='text/css'>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root { --bg: #0b0f1a; --card: #161d2f; --accent: #ff8c00; --text: #ffffff; --gray: #94a3b8; --green: #22c55e; }
+body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', Roboto, sans-serif; min-height: 100vh; overflow-x: hidden; }
+button, .btn-join, .sub-btn, .cat-card, a, input, select {
+pointer-events: auto !important;
+position: relative;
+z-index: 10;
+}
+@keyframes fadeUp { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes pulse-accent { 0% { box-shadow: 0 5px 0 #b86300, 0 0 0 0 rgba(255, 140, 0, 0.4); } 70% { box-shadow: 0 5px 0 #b86300, 0 0 0 10px rgba(255, 140, 0, 0); } 100% { box-shadow: 0 5px 0 #b86300, 0 0 0 0 rgba(255, 140, 0, 0); } }
+#maintenance-view { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 10000; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; animation: fadeIn 0.5s ease; }
+.header { padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1f2937; background: #0f1420; animation: fadeIn 0.5s ease; position: sticky; top: 0; z-index: 1000; }
+.container { padding: 15px; max-width: 600px; margin: 0 auto; }
+.auth-btn { background: var(--accent); color: white; padding: 6px 14px; border-radius: 20px; font-weight: bold; cursor: pointer; border: none; font-size: 13px; display: flex; align-items: center; gap: 5px; }
+.user-profile { display: flex; align-items: center; gap: 8px; cursor: pointer; background: transparent; padding: 2px; border-radius: 30px; }
+.user-avatar { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--accent); object-fit: cover; }
+/* Sidebar Styles */
+.sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; display: none; opacity: 0; transition: opacity 0.3s ease; backdrop-filter: blur(3px); }
+.sidebar { position: fixed; top: 0; left: -320px; width: 280px; height: 100%; background: var(--bg); border-right: 1px solid #1f2937; z-index: 10001; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); padding: 20px; box-shadow: 5px 0 15px rgba(0,0,0,0.5); overflow-y: auto; }
+.sidebar.open { left: 0; }
+.sidebar-overlay.open { display: block; opacity: 1; }
+.wallet-card { background: linear-gradient(135deg, #1c2437, #161d2f); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid #3f4e6b; text-align: center; position: relative; overflow: hidden; }
+.wallet-card::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,140,0,0.1) 0%, transparent 70%); pointer-events: none; }
+.wallet-title { color: var(--gray); font-size: 13px; margin-bottom: 5px; position: relative; }
+.wallet-balance { font-size: 32px; font-weight: 800; color: var(--green); margin: 5px 0 15px; position: relative; }
+.wallet-actions { display: flex; gap: 10px; justify-content: center; position: relative; }
+.btn-wallet { padding: 10px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; flex: 1; font-size: 13px; display: flex; justify-content: center; align-items: center; gap: 6px; transition: 0.3s; }
+.btn-add { background: var(--accent); color: white; }
+.btn-add:hover { background: #e07b00; transform: translateY(-2px); }
+.btn-withdraw { background: #2d3748; color: white; border: 1px solid #3f4e6b; }
+.btn-withdraw:hover { background: #3f4e6b; transform: translateY(-2px); }
+.banner { width: 100%; height: 220px; border-radius: 20px; overflow: hidden; border: 1px solid #1f2937; margin: 10px 0 15px; background: #161d2f; position: relative; display: flex; align-items: center; justify-content: center; animation: fadeUp 0.5s ease-out backwards; }
+.banner img { width: 100%; height: 100%; object-fit: cover; }
+.slide { display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; animation: fadeIn 0.8s ease; text-decoration: none; }
+.slide.active { display: block; }
+.cat-card { background: var(--card); border-radius: 20px; padding: 15px; display: flex; align-items: center; gap: 15px; margin-bottom: 12px; border: 1px solid #2a3346; cursor: pointer; transition: all 0.3s ease; animation: fadeUp 0.6s ease-out backwards; }
+.cat-card:hover { border-color: var(--accent); transform: translateX(5px); box-shadow: -5px 5px 15px rgba(0,0,0,0.2); }
+.cat-card:active { background: #1f2a41; transform: scale(0.98); }
+.cat-img { width: 48px; height: 48px; border-radius: 12px; object-fit: cover; background: #000; transition: 0.3s ease; }
+.cat-card:hover .cat-img { transform: scale(1.1); }
+.match-card { background: #1c2437; border-radius: 24px; padding: 18px; margin-bottom: 25px; border: 1px solid #2d3748; position: relative; box-shadow: 0 8px 0 #0f131e; transition: all 0.3s ease; animation: fadeUp 0.6s ease-out backwards; }
+.match-card:hover { transform: translateY(-3px); box-shadow: 0 12px 20px rgba(0,0,0,0.4), 0 8px 0 #0f131e; border-color: #3f4e6b; }
+.match-tag { position: absolute; top: 15px; left: 15px; background: #f6ad5522; color: #f6ad55; padding: 4px 12px; border-radius: 30px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; }
+.card-top { display: flex; align-items: center; gap: 12px; margin-top: 25px; margin-bottom: 15px; }
+.match-logo { width: 52px; height: 52px; border-radius: 16px; border: 2px solid #fff; background: #0b0f1a; padding: 3px; object-fit: cover; transition: all 0.3s ease; }
+.match-card:hover .match-logo { transform: scale(1.1) rotate(5deg); }
+.meta-row { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.meta-box { background: #2d3748; padding: 6px 14px; border-radius: 30px; font-size: 12px; display: flex; align-items: center; gap: 6px; color: #cbd5e0; }
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; text-align: center; margin-bottom: 20px; background: #1e283d; border-radius: 20px; padding: 12px 0; transition: 0.3s ease; }
+.match-card:hover .stats-grid { background: #25314a; }
+.stat-item span { display: block; font-size: 10px; color: var(--gray); text-transform: uppercase; margin-bottom: 4px; }
+.stat-item b { font-size: 18px; font-weight: 700; }
+.progress-sec { margin-bottom: 18px; }
+.slot-text { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; color: #a0b3d9; }
+.bar-bg { height: 10px; background: #2d3748; border-radius: 20px; overflow: hidden; }
+.bar-fill { height: 100%; background: linear-gradient(90deg, #ff8c00, #ffaa33); transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
+.btn-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 18px; }
+.sub-btn { background: #2d3748; color: white; border: none; padding: 12px 5px; border-radius: 16px; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; transition: all 0.2s ease; }
+.sub-btn:hover { background: #3f4a61; transform: translateY(-2px); }
+.sub-btn:active { background: #1f2a41; transform: scale(0.95); }
+.join-container { display: flex; gap: 10px; }
+.btn-join { flex: 1; background: var(--accent); color: white; border: none; padding: 16px; border-radius: 20px; font-weight: 800; font-size: 18px; cursor: pointer; box-shadow: 0 5px 0 #b86300; transition: all 0.2s ease; animation: pulse-accent 2s infinite; }
+.btn-join:hover { filter: brightness(1.1); }
+.btn-join:active { transform: translateY(3px); box-shadow: 0 2px 0 #b86300; animation: none; }
+.btn-join:disabled { background: #4b5563; box-shadow: 0 5px 0 #2d3748; opacity: 0.7; transform: none; pointer-events: none; animation: none; }
+.modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; padding: 15px; animation: fadeIn 0.3s ease; backdrop-filter: blur(5px); }
+.modal-content { background: #1a202c; width: 100%; max-width: 420px; border-radius: 32px; padding: 24px; border: 1px solid var(--accent); max-height: 80vh; overflow-y: auto; animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.custom-swal-input { background: #1c2437 !important; color: white !important; border: 1px solid #3f4e6b !important; border-radius: 16px !important; padding: 14px !important; margin-bottom: 12px !important; transition: 0.3s ease; outline: none; }
+.custom-swal-input:focus { border-color: var(--accent) !important; box-shadow: 0 0 10px rgba(255, 140, 0, 0.2) !important; }
+.wa-btn-container { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.wa-btn { flex: 1; display: flex; align-items: center; justify-content: center; background: #00d25b; color: white; padding: 14px; border-radius: 16px; text-decoration: none; font-weight: bold; font-size: 14px; box-shadow: 0 4px 0 #009b43; transition: all 0.3s ease; }
+.wa-btn:hover { background: #00e664; transform: translateY(-2px); box-shadow: 0 6px 0 #009b43; }
+.wa-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #009b43; }
+.copy-btn { background: #36415a; color: white; border: none; width: 50px; height: 50px; border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 0 #232a3a; font-size: 18px; transition: all 0.3s ease; }
+.copy-btn:hover { background: #445170; transform: translateY(-2px); }
+.copy-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #232a3a; }
+.wa-btn i { margin-right: 8px; font-size: 18px; }
+.slot-selector-container { text-align: left; margin-top: 15px; }
+.slot-option { display: flex; align-items: center; background: #2d3748; padding: 12px; border-radius: 12px; margin-bottom: 8px; cursor: pointer; transition: 0.3s ease; }
+.slot-option:hover { background: #3f4e6b; }
+.slot-option input { margin-right: 12px; width: 20px; height: 20px; accent-color: var(--accent); }
+.slot-option label { cursor: pointer; flex: 1; font-weight: 600; }
+.joined-team-card { background: #1a202c; border: 1px solid #2a3346; border-radius: 20px; padding: 15px; margin: 10px 0 20px 0; display: none; animation: fadeUp 0.5s ease-out; }
+.joined-team-card h5 { color: var(--accent); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; font-size: 16px; }
+.support-box { position: fixed; bottom: 20px; right: 20px; width: 55px; height: 55px; background: linear-gradient(135deg, #25D366, #128C7E); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 28px; color: white; text-decoration: none; box-shadow: 0 5px 15px rgba(37, 211, 102, 0.4); z-index: 9999; transition: all 0.3s ease; }
+.support-box:hover { transform: scale(1.1) translateY(-3px); box-shadow: 0 8px 20px rgba(37, 211, 102, 0.6); color: white; }
+/* New Profile Page Styles */
+.profile-top-card { background: #161d2f; border-radius: 20px; padding: 25px 20px; text-align: center; border: 1px solid var(--accent); margin-bottom: 15px; }
+.profile-balance-box { background: #1a202c; border: 1px solid #22c55e; border-radius: 12px; padding: 15px; margin-top: 20px; display: inline-block; min-width: 220px; }
+.profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
+.stat-card { background: #161d2f; border: 1px solid #2a3346; border-radius: 16px; padding: 20px 10px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.stat-card-orange { border-bottom: 3px solid #f97316; }
+.stat-card-red { border-bottom: 3px solid #ef4444; }
+.profile-action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.profile-action-btn { padding: 14px; border-radius: 16px; font-weight: bold; cursor: pointer; border: none; color: white; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s; }
+.profile-action-btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
+.brand-title { color: var(--accent); margin: 0; letter-spacing: 1px; font-size: 15px; flex: 1; text-align: center; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.brand-title img { height: 26px; width: auto; }
+</style>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5742005663208279&host=ca-host-pub-1556223355139109" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id='maintenance-view'>
+<i class='fas fa-tools' style='font-size:54px; color:var(--accent); margin-bottom:20px;'></i>
+<h2 style='margin-bottom: 15px;'>🔧 ম&#2503;ইনট&#2503;ন&#2509;য&#2494;ন&#2509;স ম&#2507;ড চলছ&#2503; 🔧</h2>
+<p style='color:var(--gray); line-height: 1.6;'>
+            স&#2494;ময&#2492;&#2495;ক সময&#2492;&#2503;র জন&#2509;য ওয&#2492;&#2503;বস&#2494;ইটট&#2495; বন&#2509;ধ রয&#2492;&#2503;ছ&#2503;&#2404;<br/>
+             আমর&#2494; স&#2495;স&#2509;ট&#2503;ম আপড&#2503;ট ও ম&#2503;ইনট&#2503;ন&#2509;য&#2494;ন&#2509;স&#2503;র ক&#2494;জ করছ&#2495;&#2404;<br/><br/>
+            &#9203; অন&#2497;গ&#2509;রহ কর&#2503; ক&#2495;ছ&#2497;ক&#2509;ষণ পর আব&#2494;র চ&#2503;ষ&#2509;ট&#2494; কর&#2497;ন&#2404;<br/><br/>
+<span style='color:var(--text); font-weight: bold;'>📌 যদ&#2495; স&#2509;লট ব&#2494; স&#2503;ব&#2494; প&#2509;রয&#2492;&#2507;জন হয&#2492;, ত&#2494;হল&#2503; ন&#2495;চ&#2503;র WhatsApp ব&#2494;টন&#2503; ক&#2509;ল&#2495;ক কর&#2497;ন:</span><br/>
+<a href='https://wa.me/8801823010953' onmouseout='this.style.transform="none";' onmouseover='this.style.transform="translateY(-2px)";' style='display:inline-flex; align-items:center; gap:8px; margin-top:15px; padding:12px 24px; background:#25D366; color:white; font-weight:bold; border-radius:30px; text-decoration:none; font-size:16px; box-shadow:0 4px 10px rgba(37, 211, 102, 0.4); transition:0.3s;' target='_blank'>
+<i class='fab fa-whatsapp' style='font-size:22px;'></i> 01823010953
+            </a>
+</p>
+</div>
+<div id='app-content'>
+<div id='home-view'>
+<div class='header'>
+<div style='display:flex; align-items:center; gap:12px; flex: 1;'>
+<i class='fas fa-bars' onclick='openSidebar()' style='color:white; cursor:pointer; font-size: 22px;'></i>
+<div id='header-wallet-sec' onclick='openWallet()' style='display:none; font-size:13px; font-weight:800; color:var(--green); background:#1e283d; padding:4px 10px; border-radius:20px; border: 1px solid #2d3748; align-items: center; gap: 5px; cursor: pointer;'>
+<i class='fas fa-wallet' style='color:var(--gray); font-size:12px;'></i> &#2547;<span id='header-wallet-amount'>0</span>
+</div>
+</div>
+<h3 class='brand-title'><img alt='' class='brand-logo'/><span class='brand-name'>WEAVE ESPORTS</span></h3>
+<div id='auth-section' style='flex: 1; display: flex; justify-content: flex-end;'>
+<button class='auth-btn' onclick='openAuthModal()'><i class='fas fa-sign-in-alt'></i> Login</button>
+</div>
+</div>
+<div class='container'>
+<div class='banner' id='banner-container'>
+<img alt='Banner' id='main-banner-img' loading='lazy' src='https://placehold.co/600x220/1e283d/1e283d?text=%20'/>
+</div>
+<div style='display:flex; justify-content:space-between; align-items:center; margin:20px 0 12px;'>
+<h4 style='margin:0;'>📋 Categories</h4>
+</div>
+<div id='dynamic-categories'>
+</div>
+<div style='text-align:center; color:#475569; font-size:10px; margin:24px 0 10px;'>সংস্করণ v2026.10.20-e</div>
+</div>
+</div>
+<div id='match-view' style='display:none;'>
+<div class='header'>
+<i class='fas fa-arrow-left' onclick='goHome()' style='color:var(--gray); font-size:20px; cursor:pointer;'></i>
+<b id='cat-title' style='color:white;'></b>
+<span style='width:20px;'></span>
+</div>
+<div class='container' id='match-list'>
+</div>
+</div>
+<div id='wallet-view' style='display:none;'>
+<div class='header'>
+<i class='fas fa-arrow-left' onclick='goHome()' style='color:var(--gray); font-size:20px; cursor:pointer;'></i>
+<b style='color:white;'><i class='fas fa-wallet' style='color:var(--accent);'></i> My Wallet</b>
+<span style='width:20px;'></span>
+</div>
+<div class='container'>
+<div style='background: linear-gradient(135deg, #ff8c00, #ff6b00); border-radius: 20px; padding: 25px 20px; text-align: left; position: relative; overflow: hidden; margin-bottom: 15px; box-shadow: 0 10px 25px rgba(255, 140, 0, 0.2);'>
+<i class='fas fa-wallet' style='position:absolute; right:-20px; bottom:-20px; font-size:120px; opacity:0.1; color:#000;'></i>
+<div style='color: rgba(255,255,255,0.9); font-size: 13px; font-weight:bold; letter-spacing:1px; margin-bottom: 5px; text-transform:uppercase;'>Withdrawable Balance</div>
+<div style='font-size: 38px; font-weight: 900; color: white;'>&#2547;<span id='page-wallet-balance'>0.00</span></div>
+<div style='margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px;'>
+<div style='color: rgba(255,255,255,0.9); font-size: 12px; font-weight:bold; letter-spacing:1px; margin-bottom: 5px; text-transform:uppercase;'>Non-Withdrawable (Slot Only)</div>
+<div style='font-size: 24px; font-weight: 800; color: #facc15;'>&#2547;<span id='page-nw-balance'>0.00</span></div>
+</div>
+</div>
+<div style='display:flex; gap:10px; margin-bottom:25px;'>
+<button onclick='addMoneyPrompt()' style='flex:1; background:#2d3748; color:white; border:1px solid #3f4e6b; padding:15px; border-radius:16px; font-weight:bold; font-size:14px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:8px;'><i class='fas fa-arrow-down' style='font-size:20px; color:var(--accent);'></i> Add Money</button>
+<button onclick='withdrawPrompt()' style='flex:1; background:#2d3748; color:white; border:1px solid #3f4e6b; padding:15px; border-radius:16px; font-weight:bold; font-size:14px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:8px;'><i class='fas fa-arrow-up' style='font-size:20px; color:#ef4444;'></i> Withdraw</button>
+</div>
+<div id='wallet-history-section' style='display:none;'>
+<h4 style='color:var(--gray); margin-bottom:12px; font-size:13px; text-transform:uppercase; letter-spacing:1px;'><i class='fas fa-history'></i> Recent Transactions</h4>
+<div id='wallet-history-list' style='max-height: 400px; overflow-y: auto; padding-right: 5px;'></div>
+</div>
+</div>
+</div>
+<div id='profile-view' style='display:none;'>
+<div style='background:#0f1420; padding:15px; text-align:center; border-bottom:1px solid #1f2937; position:sticky; top:0; z-index:1000; display:flex; align-items:center;'>
+<i class='fas fa-arrow-left' onclick='goHome()' style='color:var(--gray); font-size:20px; cursor:pointer; position:absolute; left:15px;'></i>
+<div style='flex:1; font-weight:bold; color:var(--text); letter-spacing:1px; font-size:15px;'>WEAVE <span style='color:var(--accent)'>USER PROFILE</span></div>
+</div>
+<div class='container'>
+<div class='profile-top-card'>
+<div style='background:var(--accent); width:80px; height:80px; border-radius:50%; margin:0 auto 15px auto; display:flex; align-items:center; justify-content:center; border:2px solid var(--accent); padding:2px;'>
+<img id='profile-page-avatar' loading='lazy' src='' style='width:100%; height:100%; border-radius:50%; object-fit:cover; background:#0b0f1a;'/>
+</div>
+<h2 id='profile-page-name' style='color:white; margin:0 0 5px 0; font-size:22px;'>...</h2>
+<p style='color:var(--gray); font-size:13px; margin:0 0 5px 0;'>UID: <span id='profile-page-support-id'>...</span></p>
+<div class='profile-balance-box' style='padding: 15px 10px; width: 100%;'>
+<div style='display:flex; justify-content:space-around; align-items:center;'>
+<div style='flex:1;'>
+<div style='color:var(--gray); font-size:10px; letter-spacing:0.5px; margin-bottom:5px; font-weight:bold;'>WITHDRAWABLE</div>
+<div style='color:var(--green); font-size:18px; font-weight:900;'>&#2547;<span id='profile-w-balance'>0</span></div>
+</div>
+<div style='width:1px; height:30px; background:#2a3346;'></div>
+<div style='flex:1;'>
+<div style='color:var(--gray); font-size:10px; letter-spacing:0.5px; margin-bottom:5px; font-weight:bold;'>NON-WITHDRAWABLE</div>
+<div style='color:#facc15; font-size:18px; font-weight:900;'>&#2547;<span id='profile-nw-balance'>0</span></div>
+</div>
+</div>
+</div>
+</div>
+<div class='profile-grid'>
+<div class='stat-card stat-card-orange'>
+<i class='fas fa-gift' style='color:#f97316; font-size:24px; margin-bottom:10px;'></i>
+<div style='font-size:22px; font-weight:900;'>&#2547;<span id='stat-prize'>0</span></div>
+<div style='color:var(--gray); font-size:10px; font-weight:bold; margin-top:5px;'>TOTAL PRIZE WON</div>
+</div>
+<div class='stat-card stat-card-red'>
+<i class='fas fa-ticket-alt' style='color:#ef4444; font-size:24px; margin-bottom:10px;'></i>
+<div style='font-size:22px; font-weight:900;'><span id='stat-slots'>0</span></div>
+<div style='color:var(--gray); font-size:10px; font-weight:bold; margin-top:5px;'>SLOTS BOUGHT</div>
+</div>
+</div>
+<div class='profile-action-grid'>
+<button class='profile-action-btn' onclick='goHome()' style='background:#1c2437; border:1px solid #2a3346;'><i class='fas fa-gamepad' style='color:#94a3b8;'></i> My Matches</button>
+<button class='profile-action-btn' onclick='openWallet()' style='background:var(--accent);'><i class='fas fa-history'></i> Wallet History</button>
+</div>
+<div class='profile-action-grid' style='margin-top:12px;'>
+<button class='profile-action-btn' onclick='editProfilePrompt()' style='background:#3b82f6;'><i class='fas fa-user-edit'></i> Edit Profile</button>
+<button id='change-pass-btn' class='profile-action-btn' onclick='changePasswordPrompt()' style='background:#ef4444;'><i class='fas fa-key'></i> Change Password</button>
+</div>
+</div>
+</div>
+<div id='add-money-view' style='display:none;'>
+<div class='header'>
+<i class='fas fa-arrow-left' onclick='openWallet()' style='color:var(--gray); font-size:20px; cursor:pointer;'></i>
+<b style='color:white;'>Add Money</b>
+<span style='width:20px;'></span>
+</div>
+<div class='container'>
+<div class='wallet-card' style='text-align:left; padding: 20px; display: block;'>
+<h3 style='color:var(--accent); margin-bottom:15px;'><i class='fas fa-plus-circle'></i> Wallet Recharge</h3>
+<div style='background:rgba(250,204,21,0.1); border:1px solid #facc15; color:#facc15; padding:10px 12px; border-radius:12px; font-size:12px; font-weight:bold; margin-bottom:12px; line-height:1.5;'>⚠️ অ্যাড করা টাকা শুধু স্লট কেনায় ব্যবহার করা যাবে, উইথড্র হবে না। শুধু প্রাইজ জেতা টাকা উইথড্র করা যাবে।</div>
+<div id='pay-as' style='font-size:12px; color:var(--gray); margin-bottom:10px;'></div>
+<input class='custom-swal-input' id='page-add-amount' placeholder='Enter Amount (৳)' style='width:100%; display:block; padding: 14px; box-shadow: none !important; border: 1px solid #3f4e6b; background: #1c2437 !important; color: white !important;' type='number'/>
+<button onclick='submitAddMoneyPage()' style='width:100%; padding:14px; background:var(--accent); color:white; border:none; border-radius:16px; font-weight:bold; cursor:pointer; margin-top: 10px; font-size: 15px;'>Proceed to Pay</button>
+</div>
+</div>
+</div>
+<div id='withdraw-view' style='display:none;'>
+<div class='header'>
+<i class='fas fa-arrow-left' onclick='openWallet()' style='color:var(--gray); font-size:20px; cursor:pointer;'></i>
+<b style='color:white;'>Withdraw Money</b>
+<span style='width:20px;'></span>
+</div>
+<div class='container'>
+<div class='wallet-card' style='text-align:left; padding: 20px; display: block;'>
+<h3 style='color:var(--accent); margin-bottom:5px;'><i class='fas fa-minus-circle'></i> Withdraw Funds</h3>
+<div style='font-size:13px; color:var(--gray); margin-bottom:20px;'>Available Balance (Withdrawable): <b style='color:var(--green);'>&#2547;<span id='page-withdraw-bal'>0</span></b></div>
+<span style='font-size: 12px; color: var(--gray); font-weight: bold; margin-bottom: 5px; display: block;'>Amount (&#2547;)</span>
+<input class='custom-swal-input' id='page-w-amount' placeholder='e.g. 100' style='width:100%; display:block; padding: 14px;' type='number'/>
+<span style='font-size: 12px; color: var(--gray); font-weight: bold; margin-bottom: 5px; display: block;'>Payment Method</span>
+<select class='custom-swal-input' id='page-w-method' style='width:100%; display:block; padding: 14px;'>
+<option value='bKash'>bKash</option>
+<option value='Nagad'>Nagad</option>
+<option value='Rocket'>Rocket</option>
+</select>
+<span style='font-size: 12px; color: var(--gray); font-weight: bold; margin-bottom: 5px; display: block;'>Account Number</span>
+<input class='custom-swal-input' id='page-w-number' placeholder='11-digit number' style='width:100%; display:block; padding: 14px;' type='text'/>
+<button onclick='submitWithdrawPage()' style='width:100%; padding:14px; background:#ef4444; color:white; border:none; border-radius:16px; font-weight:bold; cursor:pointer; margin-top: 15px; font-size: 15px;'>Submit Request</button>
+</div>
+</div>
+</div>
+<div id='auth-view' style='display:none;'>
+<div class='header'>
+<i class='fas fa-arrow-left' id='auth-back-icon' onclick='goHome()' style='color:var(--gray); font-size:20px; cursor:pointer;'></i>
+<b style='color:white;'>অ&#2509;য&#2494;ক&#2494;উন&#2509;ট</b>
+<span style='width:20px;'></span>
+</div>
+<div class='container' style='display: flex; justify-content: center; align-items: center; min-height: 80vh;'>
+<div style='background: #1a202c; width: 100%; max-width: 420px; border-radius: 32px; padding: 24px; border: 1px solid var(--accent);'>
+<div id='login-form-sec'>
+<h3 style='text-align:center; color:var(--accent); margin-bottom:25px;'><i class='fas fa-user-circle'></i> লগইন কর&#2497;ন</h3>
+<input class='custom-swal-input' id='login-email' placeholder='Email Address' style='width:100%; display:block;' type='email'/>
+<input class='custom-swal-input' id='login-pass' placeholder='Password' style='width:100%; display:block; margin-bottom: 10px;' type='password'/>
+<div style='text-align:right; margin-bottom: 15px;'>
+<a href='javascript:void(0)' onclick='forgotPassword()' style='color:var(--accent); text-decoration:none; font-size:13px; font-weight:bold;'>Forgot Password?</a>
+</div>
+<button onclick='submitLogin()' style='width:100%; padding:14px; background:var(--accent); color:white; border:none; border-radius:16px; font-weight:bold; cursor:pointer; margin-bottom: 15px; font-size: 15px;'>Login</button>
+<div style='text-align:center; color:var(--gray); font-size:12px; margin:0 0 12px;'>অথবা</div>
+<div id='g-login' style='display:none; justify-content:center; margin-bottom:15px; min-height:44px;'></div>
+<div style='text-align:center; color:var(--gray); font-size:13px;'>
+                            অ&#2509;য&#2494;ক&#2494;উন&#2509;ট ন&#2503;ই? <a href='javascript:void(0)' onclick='showRegister()' style='color:var(--accent); text-decoration:none; font-weight:bold;'>র&#2503;জ&#2495;স&#2509;ট&#2509;র&#2503;শন কর&#2497;ন</a>
+</div>
+<button id='auth-close-btn1' onclick='closeAuthModal()' style='width:100%; margin-top:15px; padding:10px; background:transparent; color:var(--gray); border:1px solid #3f4e6b; border-radius:16px; cursor:pointer;'>Cancel</button>
+</div>
+<div id='register-form-sec' style='display:none;'>
+<h3 style='text-align:center; color:var(--accent); margin-bottom:25px;'><i class='fas fa-user-plus'></i> নত&#2497;ন অ&#2509;য&#2494;ক&#2494;উন&#2509;ট</h3>
+<input class='custom-swal-input' id='reg-name' placeholder='Your Full Name' style='width:100%; display:block;' type='text'/>
+<input class='custom-swal-input' id='reg-email' placeholder='Email Address' style='width:100%; display:block;' type='email'/>
+<input class='custom-swal-input' id='reg-pass' placeholder='Password (Min 6 chars)' style='width:100%; display:block; margin-bottom: 20px;' type='password'/>
+<button onclick='submitRegister()' style='width:100%; padding:14px; background:var(--accent); color:white; border:none; border-radius:16px; font-weight:bold; cursor:pointer; margin-bottom: 15px; font-size: 15px;'>Register</button>
+<div style='text-align:center; color:var(--gray); font-size:12px; margin:0 0 12px;'>অথবা</div>
+<div id='g-reg' style='display:none; justify-content:center; margin-bottom:15px; min-height:44px;'></div>
+<div style='text-align:center; color:var(--gray); font-size:13px;'>
+                            আগ&#2503; থ&#2503;ক&#2503; অ&#2509;য&#2494;ক&#2494;উন&#2509;ট আছ&#2503;? <a href='javascript:void(0)' onclick='showLogin()' style='color:var(--accent); text-decoration:none; font-weight:bold;'>লগইন কর&#2497;ন</a>
+</div>
+<button id='auth-close-btn2' onclick='closeAuthModal()' style='width:100%; margin-top:15px; padding:10px; background:transparent; color:var(--gray); border:1px solid #3f4e6b; border-radius:16px; cursor:pointer;'>Cancel</button>
+</div>
+</div>
+</div>
+</div>
+<div id='manual-payment-view' style='display:none;'>
+<div class='container' id='manual-payment-container'>
+</div>
+</div>
+<div id='verifying-payment-view' style='display:none; flex-direction:column; min-height:100vh; background: var(--bg); position: absolute; top:0; left:0; right:0; z-index: 5000;'>
+<div class='header' style='display: flex; justify-content: space-between; align-items: center; background: #0f1420; border-bottom: 1px solid #1f2937;'>
+<div style='display:flex; align-items:center; gap:12px; flex: 1;'>
+<div style='font-size:13px; font-weight:800; color:var(--green); background:#1e283d; padding:4px 10px; border-radius:20px; border: 1px solid #2d3748; display: flex; align-items: center; gap: 5px;'>
+<i class='fas fa-wallet' style='color:var(--gray); font-size:12px;'></i> &#2547;<span id='verify-header-wallet'>0</span>
+</div>
+</div>
+<h3 class='brand-title'><img alt='' class='brand-logo'/><span class='brand-name'>WEAVE ESPORTS</span></h3>
+<div style='flex: 1; display: flex; justify-content: flex-end;'>
+<img id='verify-header-avatar' loading='lazy' src='' style='width:34px; height:34px; border-radius:50%; border:2px solid var(--accent); object-fit:cover; background:#0b0f1a;'/>
+</div>
+</div>
+<div style='flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding: 20px; margin-top:-50px;'>
+<style>
+                   @keyframes spinnerRotate { 100% { transform: rotate(360deg); } }
+                </style>
+<svg style='width: 65px; height: 65px; animation: spinnerRotate 1.5s linear infinite; margin-bottom: 25px;' viewBox='0 0 100 100'>
+<g stroke='#ffb700' stroke-linecap='round' stroke-width='8'>
+<line x1='50' x2='50' y1='12' y2='30'></line>
+<line x1='50' x2='50' y1='70' y2='88'></line>
+<line x1='12' x2='30' y1='50' y2='50'></line>
+<line x1='70' x2='88' y1='50' y2='50'></line>
+<line x1='23' x2='36' y1='23' y2='36'></line>
+<line x1='77' x2='64' y1='77' y2='64'></line>
+<line x1='23' x2='36' y1='77' y2='64'></line>
+<line x1='77' x2='64' y1='23' y2='36'></line>
+</g>
+</svg>
+<h2 style='color: #ffb700; font-size: 20px; margin-bottom: 12px; font-weight: bold;'>Verifying Payment... <span id='verify-page-timer'>10</span>s</h2>
+<p style='color: var(--gray); font-size: 14px;'>Please wait, checking transaction security...</p>
+</div>
+</div>
+</div>
+<div class='sidebar-overlay' id='sidebar-overlay' onclick='closeSidebar()'></div>
+<div class='sidebar' id='sidebar'>
+<div style='display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;'>
+<h3 style='color:white; margin:0;'>Menu</h3>
+<i class='fas fa-times' onclick='closeSidebar()' style='font-size:22px; cursor:pointer; color:var(--gray);'></i>
+</div>
+<div id='sidebar-profile' style='text-align:center; margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid #1f2937;'>
+<p style='color:var(--gray); font-size: 14px;'>Please login to view profile.</p>
+</div>
+<div id='sidebar-menu-options' style='display:none;'>
+<div class='cat-card' onclick='openProfile()' style='margin-bottom:10px; padding:12px;'>
+<div style='background:var(--accent); width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; color:white; font-size:16px;'><i class='fas fa-user'></i></div>
+<b style='font-size:15px; color:white;'>Profile</b>
+<i class='fas fa-chevron-right' style='margin-left:auto; color:var(--gray);'></i>
+</div>
+<div class='cat-card' onclick='openWallet()' style='margin-bottom:10px; padding:12px;'>
+<div style='background:var(--accent); width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; color:white; font-size:16px;'><i class='fas fa-wallet'></i></div>
+<b style='font-size:15px; color:white;'>My Wallet</b>
+<i class='fas fa-chevron-right' style='margin-left:auto; color:var(--gray);'></i>
+</div>
+<button onclick='logoutUser()' style='width:100%; margin-top:15px; background:#ef4444; color:white; border:none; padding:12px; border-radius:16px; font-weight:bold; cursor:pointer; font-size:14px; transition:0.3s;'><i class='fas fa-sign-out-alt'></i> Logout</button>
+</div>
+</div>
+<div class='modal' id='mainModal'>
+<div class='modal-content'>
+<h3 id='modal-title' style='text-align:center; color:var(--accent); margin-bottom:20px;'></h3>
+<div id='modal-body' style='max-height:300px; overflow-y:auto;'></div>
+<button onclick='closeModal()' onmouseout='this.style.transform="none"; this.style.boxShadow="none"' onmouseover='this.style.transform="translateY(-2px)"; this.style.boxShadow="0 4px 10px rgba(239, 68, 68, 0.4)"' style='width:100%; margin-top:24px; padding:14px; background:#ef4444; color:white; border:none; border-radius:60px; font-weight:bold; font-size:16px; cursor:pointer; transition:all 0.3s ease;'>CLOSE</button>
+</div>
+</div>
+<script type='text/javascript'>
+    (function() {
+        let BRAND_NAME = 'WEAVE ESPORTS';
+        let BRAND_LOGO = 'data:image/png;base64,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';
+
+        document.title = BRAND_NAME;
+        function applyBrand() {
+            let ic = document.querySelector('link[rel="icon"]');
+            if (!ic) { ic = document.createElement('link'); ic.rel = 'icon'; document.head.appendChild(ic); }
+            ic.type = 'image/png';
+            ic.href = BRAND_LOGO;
+            document.querySelectorAll('.brand-logo').forEach(function(i) { i.src = BRAND_LOGO; });
+            document.querySelectorAll('.brand-name').forEach(function(s) { s.textContent = BRAND_NAME; });
+        }
+        applyBrand();
+
+        /* ===== এখানে আপনার নতুন Firebase config বসান। apiKey খালি থাকলে সাইট "সেটআপ চলছে" দেখাবে ===== */
+        const firebaseConfig = {
+            apiKey: "AIzaSyCxCEp07qmfQhQyhxFOMDHl-w90Xq6YWvg",
+            authDomain: "tur-hub-a4c9b.firebaseapp.com",
+            databaseURL: "https://tur-hub-a4c9b-default-rtdb.firebaseio.com",
+            projectId: "tur-hub-a4c9b"
+        };
+        /* ========================================================================================== */
+
+        if (typeof firebase === 'undefined') {
+            document.getElementById('app-content').style.display = 'none';
+            const mv0 = document.getElementById('maintenance-view');
+            mv0.style.display = 'flex';
+            mv0.querySelector('h2').textContent = '⚠️ Firebase লোড হয়নি';
+            mv0.querySelector('p').innerHTML = 'ইন্টারনেট চেক করুন, অ্যাড-ব্লকার বন্ধ করুন, আর সাইটটি সরাসরি ব্রাউজারে বা Netlify লিংকে খুলুন। Claude-এর প্রিভিউতে এটি চলে না।';
+            return;
+        }
+
+        if (!firebaseConfig.apiKey) {
+            document.getElementById('app-content').style.display = 'none';
+            const mv = document.getElementById('maintenance-view');
+            mv.style.display = 'flex';
+            const mh = mv.querySelector('h2'), mp = mv.querySelector('p'), ma = mv.querySelector('a');
+            mh.textContent = '🚀 ' + BRAND_NAME;
+            mp.innerHTML = 'সাইট সেটআপ চলছে। খুব শীঘ্রই চালু হচ্ছে।<br/><br/>';
+            if (ma) mp.appendChild(ma);
+            return;
+        }
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+        firebase.auth().getRedirectResult().catch(function() {});
+        ['appSettings', 'categories', 'matches'].forEach(function(p) { db.ref(p).once('value').catch(function(e) { window.showErr('Database পড়া যায়নি (' + p + '): ' + e.message + ' — Rules Publish করা আছে কি দেখুন'); var box = document.getElementById('dynamic-categories'); if (box && !box.innerHTML.trim()) box.innerHTML = "<div style='text-align:center;color:#f87171;padding:30px 10px;font-size:14px;line-height:1.6'>⚠️ ডেটা লোড হয়নি।<br/>অ্যাডমিন: Firebase Realtime Database → Rules Publish করুন।</div>"; }); });
+        
+        document.addEventListener('click', function(e) {
+            if (e.target.tagName === 'BUTTON' || e.target.classList.contains('cat-card') || e.target.classList.contains('sub-btn')) {
+                e.target.style.pointerEvents = 'auto';
+            }
+        }, true);
+        
+        let settings = {};
+        let allMatches = {};
+        let allCategories = []; 
+        let matchCounts = {}; 
+        let isMatchesLoaded = false; 
+        
+        let currentUser = null;
+        let walletBalance = 0;
+        let nonWithdrawableBalance = 0;
+        let totalBalance = 0;
+        let userJoinedMatches = {};
+
+        let currentSlide = 0;
+        let slideInterval;
+        
+        window.currentPaymentContext = null;
+
+        let serverTimeOffset = 0;
+        db.ref('.info/serverTimeOffset').on('value', function(snap) {
+            serverTimeOffset = snap.val() || 0;
+        });
+
+        window.currentSlotQty = 1;
+        window.updateSlotQuantity = function(change) {
+            let newQty = window.currentSlotQty + change;
+            if(newQty < 1) newQty = 1;
+            if(newQty > 10) newQty = 10;
+            window.currentSlotQty = newQty;
+            document.getElementById('slot-qty-display').innerText = newQty;
+            
+            let container = document.getElementById('team-inputs-container');
+            let html = '';
+            for(let i=1; i<=newQty; i++) {
+                let savedSquad = i === 1 ? (localStorage.getItem('savedSquadName') || '') : '';
+                let savedPlayer = i === 1 ? (localStorage.getItem('savedPlayerName') || '') : '';
+                html += `
+                    <div style="margin-bottom: 12px; border: 1px solid #3f4e6b; padding: 12px; border-radius: 12px; background: #1c2437; text-align:left;">
+                        <div style="font-size:12px; color:var(--accent); font-weight:bold; margin-bottom:8px;">Slot ${i} Details</div>
+                        <input id="swal-squad-${i}" class="custom-swal-input" placeholder="Team Name ${i}" value="${savedSquad}" style="width: 100%; display: block; margin-bottom: 8px; padding: 12px;">
+                        <input id="swal-player-${i}" type="text" class="custom-swal-input" placeholder="IGL / Player Name ${i}" value="${savedPlayer}" style="width: 100%; display: block; margin-bottom: 0; padding: 12px;">
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+            if(window.updateTotalFee) window.updateTotalFee();
+        };
+
+        window.openSidebar = function() {
+            document.getElementById('sidebar').classList.add('open');
+            document.getElementById('sidebar-overlay').classList.add('open');
+        };
+        window.closeSidebar = function() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebar-overlay').classList.remove('open');
+        };
+
+        window.openProfile = function() {
+            closeSidebar();
+            if(document.getElementById('verifying-payment-view')) document.getElementById('verifying-payment-view').style.display = 'none';
+            document.getElementById('home-view').style.display = 'none';
+            document.getElementById('match-view').style.display = 'none';
+            document.getElementById('add-money-view').style.display = 'none';
+            document.getElementById('withdraw-view').style.display = 'none';
+            document.getElementById('auth-view').style.display = 'none';
+            document.getElementById('wallet-view').style.display = 'none';
+            document.getElementById('manual-payment-view').style.display = 'none';
+            document.getElementById('profile-view').style.display = 'block';
+            window.history.pushState({view: 'profile'}, '');
+        }
+
+        window.openWallet = function() {
+            closeSidebar();
+            if(document.getElementById('verifying-payment-view')) document.getElementById('verifying-payment-view').style.display = 'none';
+            document.getElementById('home-view').style.display = 'none';
+            document.getElementById('match-view').style.display = 'none';
+            document.getElementById('add-money-view').style.display = 'none';
+            document.getElementById('withdraw-view').style.display = 'none';
+            document.getElementById('auth-view').style.display = 'none';
+            document.getElementById('profile-view').style.display = 'none';
+            document.getElementById('manual-payment-view').style.display = 'none';
+            document.getElementById('wallet-view').style.display = 'block';
+            window.history.pushState({view: 'wallet'}, '');
+        }
+
+        window.cancelWithdraw = function(withdrawKey, historyKey, amount) {
+            Swal.fire({
+                title: 'Cancel Request?',
+                text: "Do you want to cancel this withdrawal and get a refund to your wallet?",
+                icon: 'warning',
+                background: '#161d2f', color: '#fff',
+                showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Yes, Cancel'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({ title: 'Cancelling...', background: '#161d2f', color: '#fff', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                    try {
+                        await db.ref(`withdrawals/${withdrawKey}`).update({status: 'Cancelled'});
+                        await db.ref(`users/${currentUser.uid}/wallet/history/${historyKey}`).update({status: 'Cancelled'});
+                        await db.ref(`users/${currentUser.uid}/wallet/balance`).set(walletBalance + amount);
+                        
+                        Swal.fire({icon: 'success', title: 'Cancelled!', text: 'Withdrawal cancelled and amount refunded.', background: '#161d2f', color: '#fff'});
+                    } catch (error) {
+                        Swal.fire({icon: 'error', title: 'Error', text: error.message, background: '#161d2f', color: '#fff'});
+                    }
+                }
+            });
+        };
+
+        function loadWalletHistory() {
+            if(!currentUser) return;
+            document.getElementById('wallet-history-section').style.display = 'block';
+            
+            let histRef = db.ref(`users/${currentUser.uid}/wallet/history`);
+            let withRef = db.ref('withdrawals').orderByChild('uid').equalTo(currentUser.uid);
+            
+            histRef.off();
+            withRef.off();
+
+            const renderHistoryData = () => {
+                histRef.orderByChild('time').once('value', snap => {
+                    withRef.once('value', wSnap => {
+                        let withdrawals = {};
+                        wSnap.forEach(w => { withdrawals[w.val().time] = { status: w.val().status, key: w.key, amount: w.val().amount }; });
+
+                        let html = "";
+                        let records = [];
+                        let slotsBought = 0;
+                        let totalPrizeWon = 0;
+                        
+                        snap.forEach(child => { 
+                            let r = child.val();
+                            r.key = child.key;
+                            records.push(r); 
+                            
+                            let amt = parseFloat(r.amount) || 0;
+                            if(r.type === 'Slot Booking') {
+                                slotsBought += (r.slotsCount || 1);
+                            } else if(r.type && r.type.toLowerCase().includes('prize')) {
+                                totalPrizeWon += amt;
+                            }
+                        });
+                        
+                        if(document.getElementById('stat-slots')) document.getElementById('stat-slots').innerText = slotsBought;
+                        if(document.getElementById('stat-prize')) document.getElementById('stat-prize').innerText = totalPrizeWon;
+
+                        records.reverse(); 
+                        
+                        if(records.length === 0) {
+                            html = "<div style='color:var(--gray); font-size:12px; text-align:center; padding:15px; background:#1c2437; border-radius:12px;'>কোনো হিস্ট্রি নেই।</div>";
+                        } else {
+                            records.forEach(r => {
+                                let isCredit = (r.type && r.type.includes('Add Money')) || (r.type && r.type.includes('Credit')) || (r.type && r.type.includes('Refund')) || (r.type && r.type.toLowerCase().includes('prize'));
+                                let color = isCredit ? 'var(--green)' : '#ef4444';
+                                let sign = isCredit ? '+' : '-';
+                                
+                                let statusColor = '#94a3b8';
+                                let statusText = r.status || 'Completed';
+                                let cancelBtn = '';
+                                
+                                if (r.type === 'Withdraw') {
+                                    if (withdrawals[r.time]) {
+                                        statusText = withdrawals[r.time].status;
+                                        r.withdrawKey = withdrawals[r.time].key;
+                                    }
+                                    
+                                    if (statusText === 'Failed' || statusText === 'Cancel' || statusText === 'Cancelled') {
+                                        statusColor = '#ef4444';
+                                    } else if (statusText === 'Pending') {
+                                        statusColor = '#facc15';
+                                        if (false) {
+                                            cancelBtn = `<button onclick="cancelWithdraw('${r.withdrawKey}', '${r.key}', ${r.amount})" style="background:#ef4444; color:white; border:none; padding:4px 10px; border-radius:8px; font-size:11px; font-weight:bold; cursor:pointer; margin-top:6px; box-shadow:0 2px 5px rgba(239,68,68,0.3);"><i class="fas fa-times"></i> Cancel</button>`;
+                                        }
+                                    } else {
+                                        statusColor = 'var(--green)';
+                                    }
+                                } else {
+                                    if (statusText === 'Failed' || statusText === 'Cancel' || statusText === 'Cancelled') {
+                                        statusColor = '#ef4444';
+                                    } else if (statusText === 'Pending') {
+                                        statusColor = '#facc15';
+                                    } else {
+                                        statusColor = 'var(--green)'; 
+                                    }
+                                }
+                                
+                                let dateObj = new Date(r.time);
+                                let timeStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                                
+                                html += `<div style="display:flex; justify-content:space-between; align-items:center; background:#1c2437; padding:12px; border-radius:12px; margin-bottom:8px; border:1px solid #2d3748;">
+                                            <div>
+                                                <div style="font-size:13px; font-weight:bold; color:#fff;">${r.type}</div>
+                                                <div style="font-size:10px; color:var(--gray); margin-top:3px;">${timeStr}</div>
+                                                ${cancelBtn}
+                                            </div>
+                                            <div style="text-align:right;">
+                                                <div style="color:${color}; font-weight:900; font-size:15px;">${sign}৳${r.amount}</div>
+                                                <div style="font-size:10px; color:${statusColor}; font-weight:bold; margin-top:3px;">${statusText}</div>
+                                            </div>
+                                         </div>`;
+                            });
+                        }
+                        if(document.getElementById('wallet-history-list')) {
+                            document.getElementById('wallet-history-list').innerHTML = html;
+                        }
+                    });
+                });
+            };
+
+            // OPTIMIZATION: Debounce history loading to prevent hanging
+            let historyDebounce;
+            const triggerHistoryRender = () => {
+                clearTimeout(historyDebounce);
+                historyDebounce = setTimeout(renderHistoryData, 400);
+            };
+
+            histRef.orderByChild('time').limitToLast(100).on('value', triggerHistoryRender);
+            withRef.limitToLast(50).on('value', triggerHistoryRender);
+        }
+
+        window.changePasswordPrompt = function() {
+            Swal.fire({
+                title: '<span style="color:var(--accent);">Change Password</span>',
+                html: `
+                    <input id="swal-old-pass" type="password" class="custom-swal-input" placeholder="Current Password" style="width:100%; display:block; padding: 14px;">
+                    <input id="swal-new-pass" type="password" class="custom-swal-input" placeholder="New Password (Min 6 chars)" style="width:100%; display:block; padding: 14px;">
+                `,
+                background: '#1a202c', color: '#fff',
+                showCancelButton: true,
+                confirmButtonText: 'Update',
+                confirmButtonColor: 'var(--accent)',
+                cancelButtonColor: '#3f4e6b',
+                preConfirm: () => {
+                    return {
+                        oldP: document.getElementById('swal-old-pass').value,
+                        newP: document.getElementById('swal-new-pass').value
+                    }
+                }
+            }).then((result) => {
+                if(result.isConfirmed) {
+                    let oldPass = result.value.oldP;
+                    let newPass = result.value.newP;
+                    
+                    if(!oldPass || !newPass) return Swal.fire({icon: 'error', title: 'Error', text: 'দয়া করে সবগুলো ঘর পূরণ করুন!', background: '#161d2f', color: '#fff'});
+                    if(newPass.length < 6) return Swal.fire({icon: 'error', title: 'Error', text: 'নতুন পাসওয়ার্ড অন্তত ৬ অক্ষরের হতে হবে!', background: '#161d2f', color: '#fff'});
+
+                    Swal.fire({title: 'আপডেট হচ্ছে...', background: '#161d2f', color: '#fff', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+
+                    let cred = firebase.auth.EmailAuthProvider.credential(currentUser.email, oldPass);
+
+                    currentUser.reauthenticateWithCredential(cred).then(() => {
+                        return currentUser.updatePassword(newPass);
+                    }).then(() => {
+                        return db.ref(`users/${currentUser.uid}/password`).set(newPass);
+                    }).then(() => {
+                        Swal.fire({icon: 'success', title: 'সফল', text: 'পাসওয়ার্ড সফলভাবে পরিবর্তন করা হয়েছে!', background: '#161d2f', color: '#fff'});
+                    }).catch(err => {
+                        let msg = err.message;
+                        if(err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential' || err.code === 'auth/invalid-login-credentials') {
+                            msg = "আপনার বর্তমান পাসওয়ার্ডটি ভুল হয়েছে!";
+                        } else if (msg.includes('INVALID_LOGIN_CREDENTIALS') || msg.includes('{')) {
+                            msg = "আপনার বর্তমান পাসওয়ার্ডটি ভুল হয়েছে!";
+                        } else if (err.code === 'auth/requires-recent-login') {
+                            msg = "নিরাপত্তার স্বার্থে দয়া করে লগআউট করে পুনরায় লগইন করুন, তারপর পাসওয়ার্ড পরিবর্তন করুন।";
+                        } else if (err.code === 'auth/network-request-failed') {
+                            msg = "ইন্টারনেট কানেকশন চেক করুন!";
+                        }
+                        Swal.fire({icon: 'error', title: 'Error', text: msg, background: '#161d2f', color: '#fff', confirmButtonColor: 'var(--accent)'});
+                    });
+                }
+            });
+        };
+
+        window.editProfilePrompt = function() {
+            Swal.fire({
+                title: '<span style="color:var(--accent);">Edit Profile</span>',
+                html: `
+                    <div style="text-align:left; font-size:12px; color:var(--gray); margin-bottom:5px;">Name</div>
+                    <input id="swal-edit-name" class="custom-swal-input" placeholder="Name" value="${currentUser.displayName || ''}" style="width:100%; display:block; padding: 14px;">
+                    <div style="text-align:left; font-size:12px; color:var(--gray); margin-bottom:5px;">Email</div>
+                    <input id="swal-edit-email" class="custom-swal-input" placeholder="Email" value="${currentUser.email || ''}" style="width:100%; display:block; padding: 14px;">
+                `,
+                background: '#1a202c', color: '#fff',
+                showCancelButton: true,
+                confirmButtonText: 'Save',
+                confirmButtonColor: 'var(--accent)',
+                cancelButtonColor: '#3f4e6b',
+                preConfirm: () => {
+                    return {
+                        name: document.getElementById('swal-edit-name').value,
+                        email: document.getElementById('swal-edit-email').value
+                    }
+                }
+            }).then((result) => {
+                if(result.isConfirmed) {
+                    let newName = result.value.name;
+                    let newEmail = result.value.email;
+                    
+                    if(!newName || !newEmail) return Swal.fire({icon: 'error', title: 'Error', text: 'নাম এবং ইমেইল দিন!', background: '#161d2f', color: '#fff'});
+
+                    Swal.fire({title: 'Updating...', background: '#161d2f', color: '#fff', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+
+                    currentUser.updateProfile({displayName: newName}).then(() => {
+                        if(currentUser.email !== newEmail) {
+                            return currentUser.updateEmail(newEmail);
+                        }
+                    }).then(() => {
+                        return db.ref('users/' + currentUser.uid).update({
+                            name: newName,
+                            email: newEmail
+                        });
+                    }).then(() => {
+                        Swal.fire({icon: 'success', title: 'Updated!', text: 'প্রোফাইল আপডেট হয়েছে।', background: '#161d2f', color: '#fff'});
+                        document.getElementById('profile-page-name').innerHTML = newName;
+                    }).catch(error => {
+                        Swal.fire({icon: 'error', title: 'Error', text: error.message + " (ইমেইল পরিবর্তনের জন্য নতুন করে লগইন করতে হতে পারে)", background: '#161d2f', color: '#fff'});
+                    });
+                }
+            });
+        };
+
+        window.forgotPassword = function() {
+            let emailInput = document.getElementById('login-email').value;
+            
+            Swal.fire({
+                title: 'পাসওয়ার্ড ভুলে গেছেন?',
+                text: "আপনার ইমেইল অ্যাড্রেস লিখুন। আমরা পাসওয়ার্ড রিসেট লিংক পাঠাবো।",
+                input: 'email',
+                inputValue: emailInput,
+                inputPlaceholder: 'Enter your email',
+                background: '#1a202c', color: '#fff',
+                showCancelButton: true,
+                confirmButtonColor: 'var(--accent)',
+                cancelButtonColor: '#3f4e6b',
+                confirmButtonText: 'Send Link',
+                customClass: { input: 'custom-swal-input' },
+                inputValidator: (value) => {
+                    if (!value) { return 'দয়া করে ইমেইল লিখুন!' }
+                }
+            }).then((result) => {
+                if (result.isConfirmed && result.value) {
+                    Swal.fire({title: 'Sending...', background: '#161d2f', color: '#fff', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+                    
+                    firebase.auth().sendPasswordResetEmail(result.value).then(() => {
+                        Swal.fire({icon: 'success', title: 'Sent!', text: 'পাসওয়ার্ড রিসেট লিংক আপনার ইমেইলে পাঠানো হয়েছে। ইমেইল চেক করুন।', background: '#161d2f', color: '#fff'});
+                    }).catch(error => {
+                        Swal.fire({icon: 'error', title: 'Error', text: error.message, background: '#161d2f', color: '#fff'});
+                    });
+                }
+            });
+        };
+
+        async function ensureProfile(user) {
+            if (window._registering) return;
+            try {
+                const ref = db.ref(`users/${user.uid}`);
+                const has = await ref.child('customId').once('value');
+                if (has.exists()) return;
+                const tr = await db.ref('appSettings/userCount').transaction(c => (c || 0) + 1);
+                const up = {};
+                up[`users/${user.uid}/customId`] = '#' + String(tr.snapshot.val()).padStart(2, '0');
+                up[`users/${user.uid}/uid`] = user.uid;
+                up[`users/${user.uid}/name`] = user.displayName || (user.email || 'User').split('@')[0];
+                up[`users/${user.uid}/email`] = user.email || '';
+                const w = await ref.child('wallet/balance').once('value');
+                if (!w.exists()) {
+                    up[`users/${user.uid}/wallet/balance`] = 0;
+                    up[`users/${user.uid}/wallet/nonWithdrawableBalance`] = 0;
+                }
+                await db.ref().update(up);
+            } catch (e) { console.error('ensureProfile', e); }
+        }
+
+        let uDataRef = null;
+
+        firebase.auth().onAuthStateChanged(user => {
+            currentUser = user;
+            const authSec = document.getElementById('auth-section');
+            const headerWalletSec = document.getElementById('header-wallet-sec');
+            const sidebarProfile = document.getElementById('sidebar-profile');
+            const historySec = document.getElementById('wallet-history-section');
+            
+            if (user) {
+                if(document.getElementById('auth-back-icon')) document.getElementById('auth-back-icon').style.display = 'inline-block';
+                if(document.getElementById('auth-close-btn1')) document.getElementById('auth-close-btn1').style.display = 'block';
+                if(document.getElementById('auth-close-btn2')) document.getElementById('auth-close-btn2').style.display = 'block';
+
+                if (document.getElementById('auth-view').style.display === 'block') {
+                    goHome();
+                }
+
+                uDataRef = db.ref(`users/${user.uid}`);
+                ensureProfile(user);
+                const cpBtn = document.getElementById('change-pass-btn');
+                if (cpBtn) cpBtn.style.display = user.providerData.some(p => p.providerId === 'password') ? '' : 'none';
+                let customId = "";
+                let uName = user.displayName || 'User';
+
+                const updateProfileUI = () => {
+                    let displayName = customId ? `${uName} <span style='color:var(--accent); font-size:13px;'>(${customId})</span>` : uName;
+                    let avatarUrl = user.photoURL ? user.photoURL : `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(uName)}&backgroundColor=ff8c00`;
+                    
+                    authSec.innerHTML = `<div class="user-profile" onclick="openProfile()" title="Profile">
+                                            <img src="${avatarUrl}" class="user-avatar" loading="lazy"/>
+                                         </div>`;
+                    headerWalletSec.style.display = 'flex';
+                    
+                    sidebarProfile.innerHTML = `
+                        <img src="${avatarUrl}" style="width:75px; height:75px; border-radius:50%; border:3px solid var(--accent); margin-bottom:12px; object-fit:cover;" loading="lazy"/>
+                        <h3 id="sidebar-profile-name" style="color:white; margin:0 0 5px 0;">${displayName}</h3>
+                        <p style="color:var(--gray); font-size:12px; margin:0;">${user.email}</p>
+                    `;
+                    document.getElementById('sidebar-menu-options').style.display = 'block';
+
+                    if(document.getElementById('profile-page-avatar')) {
+                        document.getElementById('profile-page-avatar').src = avatarUrl;
+                        document.getElementById('profile-page-name').innerHTML = uName;
+                        document.getElementById('profile-page-support-id').innerText = customId || 'N/A';
+                    }
+                    let verifyHeaderAvatar = document.getElementById('verify-header-avatar');
+                    if(verifyHeaderAvatar) verifyHeaderAvatar.src = avatarUrl;
+                };
+                
+                const updateBalancesUI = () => {
+                    totalBalance = (parseFloat(walletBalance) || 0) + (parseFloat(nonWithdrawableBalance) || 0);
+                    if (document.getElementById('header-wallet-amount')) document.getElementById('header-wallet-amount').innerText = totalBalance.toFixed(2);
+                    if (document.getElementById('page-wallet-balance')) document.getElementById('page-wallet-balance').innerText = parseFloat(walletBalance).toFixed(2);
+                    if (document.getElementById('page-nw-balance')) document.getElementById('page-nw-balance').innerText = parseFloat(nonWithdrawableBalance).toFixed(2);
+                    if (document.getElementById('page-withdraw-bal')) document.getElementById('page-withdraw-bal').innerText = parseFloat(walletBalance).toFixed(2);
+                    if (document.getElementById('profile-w-balance')) document.getElementById('profile-w-balance').innerText = parseFloat(walletBalance).toFixed(2);
+                    if (document.getElementById('profile-nw-balance')) document.getElementById('profile-nw-balance').innerText = parseFloat(nonWithdrawableBalance).toFixed(2);
+                    if (document.getElementById('verify-header-wallet')) document.getElementById('verify-header-wallet').innerText = totalBalance.toFixed(2);
+                };
+
+                uDataRef.child('blocked').on('value', snap => {
+                    if (snap.val() === true) {
+                        Swal.fire({icon: 'error', title: 'অ্যাকাউন্ট ব্লক', text: 'আপনার অ্যাকাউন্ট ব্লক করা হয়েছে। সাপোর্টে যোগাযোগ করুন।', background: '#161d2f', color: '#fff', allowOutsideClick: false}).then(() => firebase.auth().signOut());
+                    }
+                });
+
+                uDataRef.child('customId').on('value', snap => {
+                    customId = snap.val() || "";
+                    updateProfileUI();
+                });
+                
+                uDataRef.child('name').on('value', snap => {
+                    if(snap.exists()) uName = snap.val();
+                    updateProfileUI();
+                });
+                    
+                uDataRef.child('wallet/balance').on('value', snap => {
+                    walletBalance = snap.val() || 0;
+                    updateBalancesUI();
+                });
+                
+                uDataRef.child('wallet/nonWithdrawableBalance').on('value', snap => {
+                    nonWithdrawableBalance = snap.val() || 0;
+                    updateBalancesUI();
+                });
+
+                uDataRef.child('purchasedSlots').on('value', snap => {
+                    userJoinedMatches = snap.val() || {};
+                    if (document.getElementById('cat-title') && document.getElementById('cat-title').innerText) {
+                        loadMatches(document.getElementById('cat-title').innerText);
+                    }
+                    updateJoinedUI();
+                });
+
+                loadWalletHistory();
+                updateJoinedUI();
+            } else {
+                if (uDataRef) {
+                    uDataRef.off();
+                    uDataRef = null;
+                }
+                userJoinedMatches = {};
+                if(document.getElementById('auth-back-icon')) document.getElementById('auth-back-icon').style.display = 'inline-block';
+                if(document.getElementById('auth-close-btn1')) document.getElementById('auth-close-btn1').style.display = 'block';
+                if(document.getElementById('auth-close-btn2')) document.getElementById('auth-close-btn2').style.display = 'block';
+
+                authSec.innerHTML = `<button class='auth-btn' onclick='openAuthModal()'><i class='fas fa-sign-in-alt'></i> Login</button>`;
+                headerWalletSec.style.display = 'none';
+                sidebarProfile.innerHTML = `<p style='color:var(--gray); font-size:14px; margin: 10px 0;'>Please login to view profile.</p><button onclick="openAuthModal(); closeSidebar();" style="margin-top:10px; background:var(--accent); color:white; border:none; padding:8px 20px; border-radius:20px; font-weight:bold; cursor:pointer; font-size:12px;">Login Now</button>`;
+                document.getElementById('sidebar-menu-options').style.display = 'none';
+                historySec.style.display = 'none';
+                walletBalance = 0;
+                nonWithdrawableBalance = 0;
+                totalBalance = 0;
+                updateJoinedUI();
+            }
+        });
+
+        window.openAuthModal = function() {
+            closeSidebar();
+            if(document.getElementById('verifying-payment-view')) document.getElementById('verifying-payment-view').style.display = 'none';
+            document.getElementById('home-view').style.display = 'none';
+            document.getElementById('match-view').style.display = 'none';
+            document.getElementById('add-money-view').style.display = 'none';
+            document.getElementById('withdraw-view').style.display = 'none';
+            document.getElementById('wallet-view').style.display = 'none';
+            document.getElementById('profile-view').style.display = 'none';
+            document.getElementById('manual-payment-view').style.display = 'none';
+            document.getElementById('auth-view').style.display = 'block';
+            
+            document.getElementById('login-form-sec').style.display = 'block';
+            document.getElementById('register-form-sec').style.display = 'none';
+            window.history.pushState({view: 'auth'}, '');
+            initGoogle();
+        };
+
+        window.closeAuthModal = function() { 
+            goHome(); 
+        };
+
+        window.showRegister = function() {
+            document.getElementById('login-form-sec').style.display = 'none';
+            document.getElementById('register-form-sec').style.display = 'block';
+        };
+
+        window.showLogin = function() {
+            document.getElementById('login-form-sec').style.display = 'block';
+            document.getElementById('register-form-sec').style.display = 'none';
+        };
+
+        window.submitLogin = function() {
+            let email = document.getElementById('login-email').value;
+            let pass = document.getElementById('login-pass').value;
+            if(!email || !pass) return Swal.fire({icon: 'error', title: 'Error', text: 'দয়া করে ইমেইল ও পাসওয়ার্ড দিন!', background: '#161d2f', color: '#fff'});
+
+            Swal.fire({title: 'লগইন হচ্ছে...', background: '#161d2f', color: '#fff', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+            
+            firebase.auth().signInWithEmailAndPassword(email, pass)
+            .then(() => {
+                Swal.close();
+                closeAuthModal();
+                Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'লগইন সফল হয়েছে!', showConfirmButton: false, timer: 2000});
+            })
+            .catch(err => {
+                let msg = err.message;
+                if(err.code === 'auth/invalid-credential' || err.code === 'auth/invalid-login-credentials' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+                    msg = "আপনার ইমেইল অথবা পাসওয়ার্ড ভুল হয়েছে!";
+                } else if (msg.includes('INVALID_LOGIN_CREDENTIALS') || msg.includes('{')) {
+                    msg = "আপনার ইমেইল অথবা পাসওয়ার্ড ভুল হয়েছে!";
+                }
+                Swal.fire({icon: 'error', title: 'লগইন ব্যর্থ', text: msg, background: '#161d2f', color: '#fff', confirmButtonColor: 'var(--accent)'});
+            });
+        };
+
+        let gTries = 0;
+        function initGoogle() {
+            const cid = settings && settings.googleClientId;
+            ['g-login', 'g-reg'].forEach(function(id) { const el = document.getElementById(id); if (el) el.style.display = cid ? 'flex' : 'none'; });
+            if (!cid) return;
+            if (!(window.google && google.accounts && google.accounts.id)) {
+                if (gTries++ < 25) setTimeout(initGoogle, 400);
+                return;
+            }
+            if (window._gCid !== cid) {
+                google.accounts.id.initialize({ client_id: cid, callback: onGoogleCredential });
+                window._gCid = cid;
+            }
+            const w = Math.max(200, Math.min(320, window.innerWidth - 100));
+            [['g-login', 'signin_with'], ['g-reg', 'signup_with']].forEach(function(p) {
+                const el = document.getElementById(p[0]);
+                if (el) { el.innerHTML = ''; google.accounts.id.renderButton(el, { theme: 'filled_blue', size: 'large', shape: 'pill', text: p[1], width: w, locale: 'bn' }); }
+            });
+        }
+
+        function onGoogleCredential(resp) {
+            const cred = firebase.auth.GoogleAuthProvider.credential(resp.credential);
+            firebase.auth().signInWithCredential(cred).then(() => {
+                closeAuthModal();
+                Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'Google দিয়ে লগইন সফল!', showConfirmButton: false, timer: 2000});
+            }).catch(err => {
+                let msg = err.message;
+                if (err.code === 'auth/operation-not-allowed') msg = 'Google লগইন Firebase-এ চালু করা হয়নি। অ্যাডমিনকে জানান।';
+                else if (err.code === 'auth/account-exists-with-different-credential') msg = 'এই ইমেইল দিয়ে আগে পাসওয়ার্ডে অ্যাকাউন্ট খোলা আছে। পাসওয়ার্ড দিয়ে লগইন করুন।';
+                Swal.fire({icon: 'error', title: 'Google লগইন ব্যর্থ', text: msg, background: '#161d2f', color: '#fff', confirmButtonColor: 'var(--accent)'});
+            });
+        }
+
+        window.submitRegister = function() {
+            let name = document.getElementById('reg-name').value;
+            let email = document.getElementById('reg-email').value;
+            let pass = document.getElementById('reg-pass').value;
+            if(!name || !email || !pass) return Swal.fire({icon: 'error', title: 'Error', text: 'দয়া করে সবগুলো ঘর পূরণ করুন!', background: '#161d2f', color: '#fff'});
+            if(pass.length < 6) return Swal.fire({icon: 'error', title: 'Error', text: 'পাসওয়ার্ড অন্তত ৬ অক্ষরের হতে হবে!', background: '#161d2f', color: '#fff'});
+            
+            Swal.fire({title: 'অ্যাকাউন্ট তৈরি হচ্ছে...', background: '#161d2f', color: '#fff', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+            
+            (window._registering = true, firebase.auth().createUserWithEmailAndPassword(email, pass))
+            .then((userCred) => {
+                return userCred.user.updateProfile({ displayName: name }).then(() => {
+                    return db.ref('appSettings/userCount').transaction(count => {
+                        return (count || 0) + 1;
+                    }).then(transRes => {
+                        let newIdNum = transRes.snapshot.val();
+                        let customId = "#" + String(newIdNum).padStart(2, '0');
+                        let updates = {};
+                        updates[`users/${userCred.user.uid}/wallet/balance`] = 0;
+                        updates[`users/${userCred.user.uid}/wallet/nonWithdrawableBalance`] = 0;
+                        updates[`users/${userCred.user.uid}/customId`] = customId;
+                        updates[`users/${userCred.user.uid}/name`] = name;
+                        updates[`users/${userCred.user.uid}/email`] = email;
+                        updates[`users/${userCred.user.uid}/password`] = pass;
+                        updates[`users/${userCred.user.uid}/uid`] = userCred.user.uid;
+                        return db.ref().update(updates);
+                    });
+                });
+            })
+            .then(() => {
+                Swal.close();
+                closeAuthModal();
+                window._registering = false; Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'রেজিস্ট্রেশন সফল হয়েছে!', showConfirmButton: false, timer: 2000});
+            })
+            .catch(err => {
+                window._registering = false;
+                let msg = err.message;
+                if(err.code === 'auth/email-already-in-use') msg = "এই ইমেইল দিয়ে ইতিমধ্যে অ্যাকাউন্ট খোলা আছে!";
+                else if(err.code === 'auth/weak-password') msg = "পাসওয়ার্ডটি খুব সহজ, অন্তত ৬ অক্ষরের দিন।";
+                else if (msg.includes('{')) msg = "রেজিস্ট্রেশন করতে সমস্যা হচ্ছে। সঠিক তথ্য দিন।";
+                Swal.fire({icon: 'error', title: 'রেজিস্ট্রেশন ব্যর্থ', text: msg, background: '#161d2f', color: '#fff', confirmButtonColor: 'var(--accent)'});
+            });
+        };
+
+        window.logoutUser = function() {
+            Swal.fire({
+                title: 'Logout?',
+                text: "Are you sure you want to log out?",
+                icon: 'warning', background: '#161d2f', color: '#fff',
+                showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Logout'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    firebase.auth().signOut();
+                    closeSidebar();
+                }
+            });
+        };
+
+        window.addMoneyPrompt = function() {
+            closeSidebar();
+            const pa = document.getElementById('pay-as');
+            if (pa) pa.textContent = currentUser ? ('টাকা যোগ হবে এই অ্যাকাউন্টে: ' + (currentUser.email || currentUser.displayName || '')) : '';
+            if(document.getElementById('verifying-payment-view')) document.getElementById('verifying-payment-view').style.display = 'none';
+            document.getElementById('home-view').style.display = 'none';
+            document.getElementById('auth-view').style.display = 'none';
+            document.getElementById('profile-view').style.display = 'none';
+            document.getElementById('wallet-view').style.display = 'none';
+            document.getElementById('manual-payment-view').style.display = 'none';
+            document.getElementById('add-money-view').style.display = 'block';
+            window.history.pushState({view: 'add-money'}, '');
+        };
+
+        window.submitAddMoneyPage = function() {
+            let amount = document.getElementById('page-add-amount').value;
+            if (!amount || amount <= 0) return Swal.fire({icon: 'error', title: 'Error', text: 'দয়া করে সঠিক এমাউন্ট দিন!', background: '#161d2f', color: '#fff'});
+
+            window.currentPaymentContext = {
+                type: 'add_money',
+                amount: parseFloat(amount),
+                payload: { uid: currentUser ? currentUser.uid : 'Guest' }
+            };
+            showPaymentMethodSelection();
+        };
+
+        window.withdrawPrompt = function() {
+            closeSidebar();
+            if(document.getElementById('verifying-payment-view')) document.getElementById('verifying-payment-view').style.display = 'none';
+            if(walletBalance <= 0) return Swal.fire({icon: 'error', title: 'Oops...', text: 'Your withdrawable wallet is empty!', background: '#161d2f', color: '#fff'});
+            document.getElementById('page-withdraw-bal').innerText = parseFloat(walletBalance).toFixed(2);
+            document.getElementById('home-view').style.display = 'none';
+            document.getElementById('auth-view').style.display = 'none';
+            document.getElementById('profile-view').style.display = 'none';
+            document.getElementById('wallet-view').style.display = 'none';
+            document.getElementById('manual-payment-view').style.display = 'none';
+            document.getElementById('withdraw-view').style.display = 'block';
+            window.history.pushState({view: 'withdraw'}, '');
+        };
+
+        window.submitWithdrawPage = async function() {
+            let a = document.getElementById('page-w-amount').value;
+            let m = document.getElementById('page-w-method').value;
+            let n = document.getElementById('page-w-number').value;
+            
+            let formAmount = parseInt(a);
+            if(!formAmount || formAmount > walletBalance || formAmount < 50) return Swal.fire({icon: 'error', title: 'Error', text: 'মিনিমাম উইথড্র ৳৫০ এবং উইথড্রয়েবল ব্যালেন্সের বেশি উইথড্র করা যাবে না!', background: '#161d2f', color: '#fff'});
+            if(!n || n.length < 11) return Swal.fire({icon: 'error', title: 'Error', text: 'Enter a valid 11-digit number!', background: '#161d2f', color: '#fff'});
+
+            let timeStamp = Date.now();
+            
+            await db.ref(`users/${currentUser.uid}/wallet/balance`).set(walletBalance - formAmount);
+            
+            await db.ref(`withdrawals`).push({
+                uid: currentUser.uid, name: currentUser.displayName, amount: formAmount, method: m, number: n, status: 'Pending', time: timeStamp
+            });
+            
+            await db.ref(`users/${currentUser.uid}/wallet/history`).push({
+                type: 'Withdraw', amount: formAmount, time: timeStamp, status: 'Pending'
+            });
+            
+            Swal.fire({icon: 'success', title: 'Request Sent!', text: 'Your withdrawal request has been submitted.', background: '#161d2f', color: '#fff'});
+            
+            document.getElementById('page-w-amount').value = '';
+            document.getElementById('page-w-number').value = '';
+            openWallet();
+        };
+
+        function renderBanners(bannersObj) {
+            const container = document.getElementById('banner-container');
+            if(!bannersObj || !container) return;
+            let htmlStr = "";
+            let slides = [];
+            Object.keys(bannersObj).forEach(key => {
+                let banner = bannersObj[key];
+                if(banner.image) slides.push(banner);
+            });
+            if(slides.length === 0) return;
+            slides.forEach((slide, index) => {
+                let target = slide.link && slide.link !== '' ? '_blank' : '_self';
+                let href = slide.link && slide.link !== '' ? slide.link : 'javascript:void(0)';
+                htmlStr += `<a href="${href}" target="${target}" class="slide ${index === 0 ? 'active' : ''}">
+                                <img src="${slide.image}" alt="Banner ${index}" loading="lazy"/>
+                            </a>`;
+            });
+            container.innerHTML = htmlStr;
+            clearInterval(slideInterval);
+            if(slides.length > 1) {
+                let slideElements = container.querySelectorAll('.slide');
+                slideInterval = setInterval(() => {
+                    slideElements[currentSlide].classList.remove('active');
+                    currentSlide = (currentSlide + 1) % slideElements.length;
+                    slideElements[currentSlide].classList.add('active');
+                }, 3000); 
+            }
+        }
+
+        function parseMatchDateTime(dateStr, timeStr) {
+            let trueNowMs = new Date().getTime() + serverTimeOffset;
+            let matchDate = new Date(trueNowMs);
+            if (dateStr && dateStr.trim() !== "") {
+                let parsed = new Date(dateStr);
+                if (!isNaN(parsed.getTime())) {
+                    matchDate = parsed;
+                } else {
+                    let parts = dateStr.split(/[-/]/);
+                    if (parts.length === 3) {
+                        matchDate = new Date(parts[2], parts[1] - 1, parts[0]);
+                    }
+                }
+            }
+
+            let hours = 0, mins = 0;
+            if (timeStr) {
+                let matchTime = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+                if (matchTime) {
+                    hours = parseInt(matchTime[1], 10);
+                    mins = parseInt(matchTime[2], 10);
+                    let ampm = matchTime[3].toUpperCase();
+                    if (ampm === 'PM' && hours < 12) hours += 12;
+                    if (ampm === 'AM' && hours === 12) hours = 0;
+                }
+            }
+            matchDate.setHours(hours, mins, 0, 0);
+            
+            if (hours === 0) { 
+                matchDate.setDate(matchDate.getDate() + 1); 
+            }
+            
+            return matchDate;
+        }
+
+        function isMatchStartedOld(timeStr, isClosedFromDb) {
+            if(isClosedFromDb) return true;
+            if(!timeStr) return false;
+            let match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+            if(!match) return false;
+            let hours = parseInt(match[1], 10);
+            let mins = parseInt(match[2], 10);
+            let ampm = match[3].toUpperCase();
+            if(ampm === 'PM' && hours < 12) hours += 12;
+            if(ampm === 'AM' && hours === 12) hours = 0;
+            let trueNowMs = new Date().getTime() + serverTimeOffset;
+            let now = new Date(trueNowMs);
+            let matchDate = new Date(trueNowMs);
+            matchDate.setHours(hours, mins, 0, 0);
+            
+            if (hours === 0) { matchDate.setDate(matchDate.getDate() + 1); } 
+            else if (trueNowMs - matchDate.getTime() > 6 * 3600000) { matchDate.setDate(matchDate.getDate() + 1); }
+            
+            let startTimeWithTolerance = matchDate.getTime() + (10 * 60 * 1000); 
+            return trueNowMs >= startTimeWithTolerance;
+        }
+
+        function isMatchStarted(dateStr, timeStr, isClosedFromDb) {
+            if(isClosedFromDb) return true;
+            if(!timeStr) return false;
+            let matchDateTime = parseMatchDateTime(dateStr, timeStr);
+            let trueNowMs = new Date().getTime() + serverTimeOffset;
+            return trueNowMs >= matchDateTime.getTime();
+        }
+
+        function isMatchArchived(dateStr, timeStr, isClosedFromDb) {
+            if (!dateStr || dateStr.trim() === "") {
+                return isMatchStartedOld(timeStr, isClosedFromDb);
+            }
+
+            let trueNowMs = new Date().getTime() + serverTimeOffset;
+            let archiveTime = new Date();
+
+            let parsed = new Date(dateStr);
+            if (!isNaN(parsed.getTime())) {
+                archiveTime = parsed;
+            } else {
+                let parts = dateStr.split(/[-/]/);
+                if (parts.length === 3) {
+                    archiveTime = new Date(parts[2], parts[1] - 1, parts[0]);
+                }
+            }
+
+            archiveTime.setDate(archiveTime.getDate() + 1);
+            archiveTime.setHours(0, 10, 0, 0); 
+
+            return trueNowMs >= archiveTime.getTime();
+        }
+
+        function isMatchReadyToPublish(dateStr) {
+            if (!dateStr || dateStr.trim() === "") return true; 
+            let trueNowMs = new Date().getTime() + serverTimeOffset;
+            let today = new Date(trueNowMs);
+            let matchDate = new Date(dateStr);
+            if (isNaN(matchDate.getTime())) {
+                let parts = dateStr.split(/[-/]/);
+                if (parts.length === 3) {
+                    matchDate = new Date(parts[2], parts[1] - 1, parts[0]);
+                }
+            }
+            if (isNaN(matchDate.getTime())) return true;
+            today.setHours(0,0,0,0);
+            matchDate.setHours(0,0,0,0);
+            return today.getTime() >= matchDate.getTime();
+        }
+
+        window.copyToClipboard = function(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => { Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'কপি হয়েছে!', showConfirmButton: false, timer: 2000 }); });
+            } else {
+                let textArea = document.createElement("textarea"); textArea.value = text; document.body.appendChild(textArea); textArea.select(); document.execCommand('copy'); document.body.removeChild(textArea);
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'কপি হয়েছে!', showConfirmButton: false, timer: 2000 });
+            }
+        };
+
+        function renderCategories() {
+            const container = document.getElementById('dynamic-categories');
+            if(!container) return;
+            let htmlStr = "";
+            let displayCats = allCategories;
+            if (displayCats.length === 0) { displayCats = [ { name: "Daily Scrim", logo: settings.dailyLogo || "" }, { name: "Champion Rush", logo: settings.champLogo || "" } ]; }
+
+            displayCats.forEach(cat => {
+                const count = matchCounts[cat.name] || 0;
+                const logoSrc = cat.logo || `https://ui-avatars.com/api/?name=${cat.name}&background=1e283d&color=fff&size=48`;
+                htmlStr += `
+                    <div class='cat-card' onclick='openCategory("${cat.name}")'>
+                        <img alt='${cat.name}' class='cat-img' src='${logoSrc}' loading="lazy"/>
+                        <div><b style='font-size:16px;'>${cat.name}</b><small style='display:block; color:var(--green);'>${count} Matches available</small></div>
+                        <i class='fas fa-chevron-right' style='margin-left:auto; color:var(--gray); font-size:20px;'></i>
+                    </div>`;
+            });
+            container.innerHTML = htmlStr;
+        }
+
+        db.ref('appSettings').on('value', snap => {
+            window.__ready = true;
+            settings = snap.val() || {};
+            initGoogle();
+            if (settings.brandName || settings.brandLogo) {
+                if (settings.brandName) BRAND_NAME = settings.brandName;
+                if (settings.brandLogo) BRAND_LOGO = settings.brandLogo;
+                document.title = BRAND_NAME;
+                applyBrand();
+            }
+            if (settings.supportNumber) { document.querySelectorAll('.support-box, #maintenance-view a').forEach(function(l) { l.href = 'https://wa.me/' + settings.supportNumber; }); }
+            document.getElementById('maintenance-view').style.display = settings.maintenanceMode ? 'flex' : 'none';
+            document.getElementById('app-content').style.display = settings.maintenanceMode ? 'none' : 'block';
+            if (settings.banners) { renderBanners(settings.banners); } 
+            else if (settings.banner) { const container = document.getElementById('banner-container'); if(container) container.innerHTML = `<a href="javascript:void(0)" class="slide active"><img alt='Banner' src='${settings.banner}' loading="lazy"/></a>`; }
+            
+            renderCategories(); 
+            updateJoinedUI();
+            if (document.getElementById('cat-title') && document.getElementById('cat-title').innerText) loadMatches(document.getElementById('cat-title').innerText);
+
+            if (settings.welcomePopup && settings.welcomePopup.enabled === true) {
+                if (!sessionStorage.getItem('welcomeShown')) {
+                    let popupConfig = {
+                        title: `<span style="color:var(--accent);">${settings.welcomePopup.title || 'Welcome!'}</span>`,
+                        html: `<p style="color:var(--gray); font-size:14px; margin:0;">${settings.welcomePopup.message || ''}</p>`,
+                        background: '#1a202c',
+                        confirmButtonColor: 'var(--accent)',
+                        confirmButtonText: 'Okay',
+                        customClass: { popup: 'border-accent' }
+                    };
+                    if (settings.welcomePopup.image && settings.welcomePopup.image.trim() !== "") {
+                        popupConfig.imageUrl = settings.welcomePopup.image.trim();
+                        popupConfig.imageWidth = '100%';
+                        popupConfig.imageAlt = 'Welcome Image';
+                    }
+                    Swal.fire(popupConfig);
+                    sessionStorage.setItem('welcomeShown', 'true');
+                }
+            }
+        });
+
+        // OPTIMIZATION: Debounce categories
+        let catDebounce;
+        db.ref('categories').on('value', snap => {
+            clearTimeout(catDebounce);
+            catDebounce = setTimeout(() => {
+                allCategories = [];
+                if (snap.exists()) { snap.forEach(child => { allCategories.push({ id: child.key, name: child.val().name, logo: child.val().logo || '', notice: child.val().notice || '' }); }); }
+                
+                renderCategories();
+                if (document.getElementById('cat-title') && document.getElementById('cat-title').innerText) loadMatches(document.getElementById('cat-title').innerText);
+            }, 300);
+        });
+
+        // OPTIMIZATION: Debounce matches
+        let matchesDebounce;
+        db.ref('matches').on('value', snap => {
+            allMatches = snap.val() || {};
+            isMatchesLoaded = true; 
+            
+            clearTimeout(matchesDebounce);
+            matchesDebounce = setTimeout(() => {
+                matchCounts = {};
+                Object.values(allMatches).forEach(matchData => {
+                    if (matchData.isHidden === true || matchData.isHidden === "true") return; 
+                    if (!isMatchReadyToPublish(matchData.date)) return;
+                    if (isMatchArchived(matchData.date, matchData.time, matchData.isClosed)) return; 
+                    
+                    const cat = matchData.category || 'Uncategorized';
+                    matchCounts[cat] = (matchCounts[cat] || 0) + 1;
+                });
+                renderCategories(); 
+                if (document.getElementById('cat-title') && document.getElementById('cat-title').innerText) loadMatches(document.getElementById('cat-title').innerText);
+                updateJoinedUI();
+            }, 300);
+        });
+
+        window.openCategory = function(cat) {
+            window.history.pushState({view: 'match'}, '');
+            if(document.getElementById('verifying-payment-view')) document.getElementById('verifying-payment-view').style.display = 'none'; 
+            document.getElementById('home-view').style.display = 'none';
+            document.getElementById('match-view').style.display = 'block';
+            document.getElementById('add-money-view').style.display = 'none';
+            document.getElementById('withdraw-view').style.display = 'none';
+            document.getElementById('auth-view').style.display = 'none';
+            document.getElementById('profile-view').style.display = 'none';
+            document.getElementById('wallet-view').style.display = 'none';
+            document.getElementById('manual-payment-view').style.display = 'none';
+            document.getElementById('cat-title').innerText = cat;
+            document.getElementById('match-list').innerHTML = "";
+            loadMatches(cat);
+            const catObj = allCategories.find(c => c.name === cat);
+            if (catObj && catObj.notice && catObj.notice.trim() !== "") {
+                Swal.fire({ title: '<i class="fas fa-bullhorn" style="color:var(--accent);"></i> Notice', html: `<span style="color:#e2e8f0; font-size: 15px;">${catObj.notice}</span>`, background: '#161d2f', color: '#ffffff', confirmButtonColor: 'var(--accent)', confirmButtonText: 'Okay', customClass: { popup: 'border-accent' } });
+            }
+        };
+
+        window.goHome = function() {
+            if(document.getElementById('verifying-payment-view')) document.getElementById('verifying-payment-view').style.display = 'none'; 
+            document.getElementById('home-view').style.display = 'block';
+            document.getElementById('match-view').style.display = 'none';
+            document.getElementById('add-money-view').style.display = 'none';
+            document.getElementById('withdraw-view').style.display = 'none';
+            document.getElementById('auth-view').style.display = 'none';
+            document.getElementById('profile-view').style.display = 'none';
+            document.getElementById('wallet-view').style.display = 'none';
+            document.getElementById('manual-payment-view').style.display = 'none';
+            document.getElementById('cat-title').innerText = "";
+        };
+
+        window.addEventListener('popstate', function(event) {
+            if (document.getElementById('manual-payment-view').style.display === 'block' || document.getElementById('verifying-payment-view').style.display === 'flex') {
+                if (window.currentPaymentContext && window.currentPaymentContext.step === 'details') {
+                    if (document.getElementById('verifying-payment-view').style.display === 'flex') {
+                        document.getElementById('verifying-payment-view').style.display = 'none';
+                        document.getElementById('manual-payment-view').style.display = 'block';
+                    } else {
+                        showPaymentMethodSelection(true);
+                    }
+                } else {
+                    closeManualPaymentView();
+                }
+            } else if (document.getElementById('add-money-view').style.display === 'block' || document.getElementById('withdraw-view').style.display === 'block') {
+                openWallet();
+            } else if (document.getElementById('profile-view').style.display === 'block') {
+                goHome();
+            } else {
+                goHome();
+            }
+        });
+
+        window.currentManageModalRef = null;
+        window.currentManageModalListener = null;
+
+        window.openManageSlotsModal = function(matchId, timeStr, dateStr) {
+            if(!currentUser) return openAuthModal();
+            
+            let trueNowMs = new Date().getTime() + serverTimeOffset;
+            let matchDate = parseMatchDateTime(dateStr, timeStr);
+            let diff = matchDate.getTime() - trueNowMs;
+            let canCancel = true;
+
+            if (trueNowMs >= matchDate.getTime() || diff < 3600000) {
+                 canCancel = false; 
+            }
+
+            Swal.fire({ title: 'Loading...', background: '#161d2f', color: '#fff', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            
+            if (window.currentManageModalRef && window.currentManageModalListener) {
+                window.currentManageModalRef.off('value', window.currentManageModalListener);
+            }
+
+            window.currentManageModalRef = db.ref(`registrations/${matchId}`);
+            window.currentManageModalListener = window.currentManageModalRef.on('value', (snap) => {
+                let html = '<div style="text-align:left; max-height: 400px; overflow-y: auto;">';
+                let found = false;
+                
+                snap.forEach(child => {
+                    let r = child.val();
+                    if (r.uid === currentUser.uid || r.userId === currentUser.uid) {
+                        found = true;
+                        
+                        let cancelStatusHtml = '';
+                        let actionBtns = '';
+                        
+                        let cStatus = r.cancelStatus || '';
+                        let cStatLow = cStatus.toLowerCase();
+                        
+                        if (cStatLow === 'pending') {
+                            cancelStatusHtml = `<span style="background: #facc15; color: #000; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">Cancel Pending</span>`;
+                        } else if (cStatLow.includes('reject') || cStatLow.includes('রিজেক্ট')) {
+                            cancelStatusHtml = `<span style="background: #ef4444; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">Cancel Rejected</span>`;
+                        }
+                        
+                        if (!cStatus || cStatLow.includes('reject') || cStatLow.includes('রিজেক্ট')) {
+                            actionBtns = `
+                                <button onclick="editSlot('${matchId}', '${child.key}', '${r.team}', '${r.playerLength || ''}')" style="flex:1; background:#3b82f6; border:none; padding:8px; border-radius:6px; color:white; font-weight:bold; cursor:pointer;">Edit</button>
+                                ${canCancel ? `<button onclick="requestCancelSlot('${matchId}', '${child.key}', '${r.team}', '${timeStr}')" style="flex:1; background:#ef4444; border:none; padding:8px; border-radius:6px; color:white; font-weight:bold; cursor:pointer;">Cancel</button>` : `<div style="flex:1; text-align:center; font-size:10px; color:#ef4444;">Cancellation time over</div>`}
+                            `;
+                        }
+                        
+                        html += `
+                            <div style="background:#253040; padding:15px; border-radius:10px; margin-bottom:10px; border:1px solid #3f4e6b;">
+                                <div style="margin-bottom:10px; display:flex; justify-content:space-between;">
+                                    <div>
+                                        <b style="color:var(--accent); font-size: 12px;">Team:</b> <span id="team-txt-${child.key}">${r.team}</span><br/>
+                                        <b style="color:var(--accent); font-size: 12px;">Player:</b> <span id="player-txt-${child.key}">${r.playerLength || 'N/A'}</span>
+                                    </div>
+                                    <div>${cancelStatusHtml}</div>
+                                </div>
+                                <div style="display:flex; gap:10px; align-items:center;">
+                                    ${actionBtns}
+                                </div>
+                            </div>`;
+                    }
+                });
+                
+                Swal.close();
+                if(!found) {
+                    if (document.getElementById('mainModal').style.display === 'flex') {
+                        closeModal();
+                    } else {
+                        Swal.fire({icon: 'info', title: 'Info', text: 'কোনো স্লট পাওয়া যায়নি!', background: '#161d2f', color: '#fff'});
+                        closeModal();
+                    }
+                    return;
+                }
+                openModal("📋 Manage Your Slots", html + '</div>');
+            }, (error) => {
+                Swal.close();
+                Swal.fire({icon: 'error', text: error.message, background: '#161d2f', color: '#fff'});
+            });
+        };
+
+        window.editSlot = async function(matchId, regId, oldTeam, oldPlayer) {
+            closeModal();
+            const { value: formValues } = await Swal.fire({
+                title: 'Edit Details',
+                html: `
+                    <div style="text-align:left; font-size:12px; color:var(--gray); margin-bottom:5px;">Team Name</div>
+                    <input id="edit-team" class="custom-swal-input" value="${oldTeam}" placeholder="Team Name" style="width:100%; display:block; padding:14px; margin-bottom:10px;">
+                    <div style="text-align:left; font-size:12px; color:var(--gray); margin-bottom:5px;">Player Name</div>
+                    <input id="edit-player" class="custom-swal-input" value="${oldPlayer}" placeholder="Player Name" style="width:100%; display:block; padding:14px;">
+                `,
+                background: '#161d2f', color: '#fff', showCancelButton: true, confirmButtonColor: '#3b82f6',
+                preConfirm: () => {
+                    let t = document.getElementById('edit-team').value.trim();
+                    let p = document.getElementById('edit-player').value.trim();
+                    if(!t || !p) {
+                        Swal.showValidationMessage('টিম এবং প্লেয়ারের নাম পূরণ করুন!');
+                        return false;
+                    }
+                    return { team: t, player: p };
+                }
+            });
+
+            if(formValues) {
+                Swal.fire({ title: 'Updating...', background: '#161d2f', color: '#fff', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                try {
+                    await db.ref(`registrations/${matchId}/${regId}`).update({
+                        team: formValues.team,
+                        playerLength: formValues.player
+                    });
+                    Swal.fire({icon: 'success', title: 'Updated!', background: '#161d2f', color: '#fff'}).then(() => {
+                        let catTitle = document.getElementById('cat-title').innerText;
+                        if(catTitle) loadMatches(catTitle);
+                    });
+                } catch(e) {
+                    Swal.fire({icon: 'error', text: 'Failed to update', background: '#161d2f', color: '#fff'});
+                }
+            }
+        };
+
+        window.requestCancelSlot = async function(matchId, regId, teamName, matchTime) {
+            closeModal();
+            const { value: reason } = await Swal.fire({
+                title: 'ক্যান্সেল রিকোয়েস্ট',
+                input: 'text',
+                inputPlaceholder: 'কারণ লিখুন (যেমন: টিমের সমস্যা)...',
+                showCancelButton: true,
+                confirmButtonText: 'রিকোয়েস্ট পাঠান',
+                confirmButtonColor: '#ef4444',
+                background: '#161d2f', color: '#fff',
+                inputValidator: (value) => {
+                    if (!value) return 'আপনাকে একটি কারণ লিখতে হবে!';
+                }
+            });
+
+            if(reason) {
+                Swal.fire({ title: 'রিকোয়েস্ট পাঠানো হচ্ছে...', background: '#161d2f', color: '#fff', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                try {
+                    const reqRef = db.ref('cancelRequests');
+                    const newReq = {
+                        uid: currentUser.uid,
+                        name: currentUser.displayName || 'User',
+                        matchId: matchId,
+                        matchTime: matchTime || '',
+                        match: matchTime || '',
+                        timeStr: matchTime || '',
+                        regId: regId, 
+                        teamName: teamName,
+                        reason: reason,
+                        status: 'Pending',
+                        time: Date.now(),
+                        requestTime: Date.now()
+                    };
+
+                    let pushRef = await reqRef.push(newReq);
+                    
+                    await db.ref(`registrations/${matchId}/${regId}`).update({
+                        cancelStatus: 'Pending',
+                        cancelReqId: pushRef.key
+                    });
+
+                    if (userJoinedMatches[matchId]) {
+                        userJoinedMatches[matchId].cancelStatus = 'Pending';
+                    }
+
+                    Swal.fire({
+                        icon: 'success', 
+                        title: 'সফল!', 
+                        text: 'আপনার ক্যান্সেল রিকোয়েস্ট এডমিনের কাছে পাঠানো হয়েছে।', 
+                        background: '#161d2f', 
+                        color: '#fff'
+                    });
+                } catch(e) {
+                    Swal.fire({icon: 'error', title: 'সমস্যা হয়েছে', text: 'Network Error, please try again.', background: '#161d2f', color: '#fff'});
+                }
+            }
+        };
+
+        function loadMatches(cat) {
+            const list = document.getElementById('match-list');
+            let htmlStr = "";
+            const catObj = allCategories.find(c => c.name === cat);
+            const fallbackLogo = (cat === "Daily Scrim") ? settings.dailyLogo : settings.champLogo;
+            const logo = (catObj && catObj.logo) ? catObj.logo : (fallbackLogo || `https://ui-avatars.com/api/?name=${cat}&background=1e283d&color=fff`);
+
+            const matchesArray = Object.keys(allMatches).map(id => ({ id: id, ...allMatches[id] }));
+            matchesArray.sort((a, b) => (a.sortOrder || 999) - (b.sortOrder || 999));
+
+            matchesArray.forEach(m => {
+                const hasJoined = userJoinedMatches[m.id] !== undefined;
+                
+                if (isMatchArchived(m.date, m.time, m.isClosed)) return;
+
+                if (!hasJoined && !isMatchReadyToPublish(m.date)) return;
+                
+                if ((m.isHidden === true || m.isHidden === "true") && !hasJoined) return;
+                
+                if (m.category === cat) {
+                    const isClosed = isMatchStarted(m.date, m.time, m.isClosed);
+                    
+                    const isFull = m.slots >= m.totalSlots;
+                    const percent = Math.min((m.slots / m.totalSlots) * 100, 100);
+                    
+                    let topRightHtml = '';
+                    let joinBtnHtml = '';
+
+                    if (hasJoined) {
+                        const waLink = m.whatsappLink || userJoinedMatches[m.id].whatsappGroupLink || '#';
+                        const joinMessage = m.joinMessage || userJoinedMatches[m.id].joinMessage || 'WhatsApp Group Link';
+
+                        let cancelBtnHtml = `<button onclick="openManageSlotsModal('${m.id}', '${m.time}', '${m.date || ''}')" style="background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer; pointer-events: auto !important; position: relative; z-index: 10;">Manage</button>`;
+
+                        topRightHtml = `
+                            <div style="position: absolute; top: 12px; right: 12px; display: flex; align-items: center; gap: 8px; z-index: 5;">
+                                <span style="color: #22c55e; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 4px;">
+                                    <i class="far fa-check-circle"></i> JOINED
+                                </span>
+                                <div style="width: 1px; height: 16px; background: #3f4e6b;"></div>
+                                ${cancelBtnHtml}
+                            </div>`;
+
+                        let waSectionHtml = '';
+                        if (waLink === '#' || waLink.trim() === '') {
+                            waSectionHtml = `
+                                <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; border-radius: 12px; padding: 10px; display: flex; align-items: center; justify-content: center; flex: 1.1; text-align: center;">
+                                    <span style="color: #ef4444; font-size: 11px; font-weight: bold; line-height: 1.3;">ম্যাচের গ্রুপ এখনও এড করা হয়নি কিছুক্ষণ পর এড করলে আপনি জয়েন দিন।</span>
+                                </div>
+                            `;
+                        } else {
+                            waSectionHtml = `
+                                <a href="${waLink}" target="_blank" style="background: #10b981; border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; justify-content: center; gap: 8px; flex: 1.1; text-decoration: none; cursor: pointer; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);">
+                                    <i class="fab fa-whatsapp" style="color: white; font-size: 24px;"></i>
+                                    <div style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2;">
+                                        <span style="color: white; font-size: 12px; font-weight: bold;">WhatsApp Group Link</span>
+                                        <span style="color: rgba(255,255,255,0.9); font-size: 10px;">Tap to join our WhatsApp group</span>
+                                    </div>
+                                </a>
+                                <button onclick="copyToClipboard('${waLink}')" style="background: transparent; border: 1px solid #3f4e6b; border-radius: 12px; padding: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; transition: 0.3s; flex: 0.2;" title="Copy Link" onmouseover="this.style.background='#3f4e6b'" onmouseout="this.style.background='transparent'">
+                                    <i class="fas fa-copy" style="font-size: 20px; color: #cbd5e0;"></i>
+                                </button>
+                            `;
+                        }
+
+                        joinBtnHtml = `
+                            <div style="display: flex; gap: 8px; width: 100%;">
+                                <button onclick="handleJoin('${cat}')" style="background: transparent; border: 1px solid #3f4e6b; border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex: 0.9; cursor: pointer; transition: 0.3s;">
+                                    <i class="fas fa-shopping-cart" style="color: #22c55e; font-size: 22px;"></i>
+                                    <div style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2;">
+                                        <span style="color: white; font-size: 12px; font-weight: bold;">BUY MORE</span>
+                                        <span style="color: var(--gray); font-size: 10px;">Buy More Slots</span>
+                                    </div>
+                                </button>
+                                ${waSectionHtml}
+                            </div>`;
+
+                    } else {
+                        joinBtnHtml = `<button class="btn-join" style="width: 100%;" ${isFull ? 'disabled' : ''} onclick="handleJoin('${cat}')">${isFull ? '⛔ FULL' : '⚡ JOIN NOW'}</button>`;
+                    }
+                    
+                    htmlStr += `
+                        <div class="match-card">
+                            <div class="match-tag">#${m.id.slice(-5).toUpperCase()}</div>
+                            ${topRightHtml}
+                            <div class="card-top">
+                                <img src="${logo}" class="match-logo" loading="lazy"/>
+                                <div><h3 style="margin:0;">${m.time} </h3><small>${m.map || 'Erangel'}</small></div>
+                            </div>
+                            <div class="stats-grid">
+                                <div class="stat-item"><span>Prize</span><b style="color:var(--green)">৳${m.prize}</b></div>
+                                <div class="stat-item"><span>Mode</span><b>${m.mode || 'SQUAD'}</b></div>
+                                <div class="stat-item"><span>Entry</span><b style="color:var(--accent)">৳${m.fee}</b></div>
+                            </div>
+                            <div class="progress-sec">
+                                <div class="slot-text"><span>Joined: ${m.slots}</span><span>Slots: ${m.totalSlots}</span></div>
+                                <div class="bar-bg"><div class="bar-fill" style="width:${percent}%"></div></div>
+                            </div>
+                            <div class="btn-row">
+                                <button class="sub-btn" onclick="viewSlots('${m.id}')">SLOTS</button>
+                                <button class="sub-btn" onclick="viewRules('${m.id}')">RULES</button>
+                                <button class="sub-btn" onclick="viewPrize('${m.id}')">PRIZE</button>
+                            </div>
+                            <div class="join-container" style="display: flex; width: 100%;">
+                                ${joinBtnHtml}
+                            </div>
+                        </div>`;
+                }
+            });
+            if(htmlStr === "") { htmlStr = `<div style="text-align:center; padding: 40px 20px; color:var(--gray);"><i class="fas fa-box-open" style="font-size: 40px; margin-bottom: 15px; color:#3f4e6b;"></i><p>বর্তমানে এই ক্যাটাগরিতে কোনো ম্যাচ নেই।</p></div>`; }
+            list.innerHTML = htmlStr;
+        }
+
+        window.handleJoin = async function(category) {
+            if (!currentUser) {
+                Swal.fire({
+                    icon: 'warning', 
+                    title: 'লগইন প্রয়োজন!', 
+                    text: 'স্লট কিনতে হলে প্রথমে আপনাকে লগইন বা রেজিস্ট্রেশন করতে হবে।', 
+                    background: '#161d2f', 
+                    color: '#fff'
+                });
+                openAuthModal();
+                return;
+            }
+
+            let initialInputs = `
+                <div style="margin-bottom: 12px; border: 1px solid #3f4e6b; padding: 12px; border-radius: 12px; background: #1c2437; text-align:left;">
+                    <div style="font-size:12px; color:var(--accent); font-weight:bold; margin-bottom:8px;">Slot 1 Details</div>
+                    <input id="swal-squad-1" class="custom-swal-input" placeholder="Team Name" value="${localStorage.getItem('savedSquadName') || ''}" style="width: 100%; display: block; margin-bottom: 8px; padding: 12px;">
+                    <input id="swal-player-1" type="text" class="custom-swal-input" placeholder="IGL / Player Name" value="${localStorage.getItem('savedPlayerName') || ''}" style="width: 100%; display: block; margin-bottom: 0; padding: 12px;">
+                </div>
+            `;
+
+            const { value: formValues } = await Swal.fire({
+                title: 'Enter Team Details',
+                html: `
+                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #ff6b6b; padding: 12px; border-radius: 12px; font-size: 12px; font-weight: bold; margin: 0 auto 15px auto; text-align: center; line-height: 1.4;">
+                        ⚠️ যেই প্লেয়ার খেলবে তার নাম দিবেন। তা না দিলে আপনার স্কোয়াড নাম রেজাল্টে আসবে।
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:#1c2437; padding:12px 15px; border-radius:12px; margin-bottom:15px; border:1px solid #3f4e6b;">
+                        <b style="color:white; font-size:14px;">Quantity (Slots)</b>
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <button onclick="updateSlotQuantity(-1)" style="background:#2d3748; color:white; border:none; width:32px; height:32px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:18px; display:flex; align-items:center; justify-content:center;">-</button>
+                            <b id="slot-qty-display" style="color:var(--accent); font-size:18px;">1</b>
+                            <button onclick="updateSlotQuantity(1)" style="background:var(--accent); color:white; border:none; width:32px; height:32px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:18px; display:flex; align-items:center; justify-content:center;">+</button>
+                        </div>
+                    </div>
+                    <div id="team-inputs-container" style="max-height: 280px; overflow-y: auto; padding-right: 5px;">
+                        ${initialInputs}
+                    </div>
+                `,
+                background: '#161d2f', color: '#fff', showCancelButton: true,
+                preConfirm: () => {
+                    let qty = window.currentSlotQty;
+                    let teams = [];
+                    for(let i=1; i<=qty; i++) {
+                        let squad = document.getElementById('swal-squad-'+i).value.trim();
+                        let player = document.getElementById('swal-player-'+i).value.trim();
+                        if(!squad || !player) {
+                            Swal.showValidationMessage('দয়া করে সব টিমের নাম এবং প্লেয়ারের নাম পূরণ করুন!');
+                            return false;
+                        }
+                        teams.push({squadName: squad, playerName: player});
+                    }
+                    return { teams: teams, qty: qty };
+                }
+            });
+
+            if (!formValues) return;
+            const teamsData = formValues.teams;
+            const totalSlotsToBuy = formValues.qty;
+            
+            localStorage.setItem('savedSquadName', teamsData[0].squadName);
+            localStorage.setItem('savedPlayerName', teamsData[0].playerName);
+
+            window.updateTotalFee = function() {
+                let total = 0;
+                document.querySelectorAll('.match-checkbox:checked').forEach(el => { 
+                    total += parseFloat(el.getAttribute('data-fee')); 
+                });
+                document.getElementById('total-fee-display').innerText = "Total Fee: ৳" + (total * totalSlotsToBuy);
+            };
+
+            let slotsHtml = '<div class="slot-selector-container">';
+            const slotsArray = Object.keys(allMatches).map(id => ({ id: id, ...allMatches[id] }));
+            slotsArray.sort((a, b) => (a.sortOrder || 999) - (b.sortOrder || 999));
+
+            slotsArray.forEach(m => {
+                if (m.isHidden === true || m.isHidden === "true") return;
+                if (isMatchArchived(m.date, m.time, m.isClosed)) return;
+                if (!isMatchReadyToPublish(m.date)) return;
+                const isClosed = isMatchStarted(m.date, m.time, m.isClosed);
+                let availableSlots = m.totalSlots - (m.slots || 0);
+                
+                if (m.category === category && availableSlots >= totalSlotsToBuy) {
+                    slotsHtml += `<div class="slot-option"><input type="checkbox" id="check-${m.id}" class="match-checkbox" value="${m.id}" data-fee="${m.fee}" onchange="updateTotalFee()"><label for="check-${m.id}">${m.time}  (৳${m.fee} x ${totalSlotsToBuy} = ৳${m.fee * totalSlotsToBuy})</label></div>`;
+                }
+            });
+            slotsHtml += '</div><div id="total-fee-display" style="margin-top:15px; font-weight:bold; color:var(--accent); text-align:right;">Total Fee: ৳0</div>';
+
+            const { value: selectedMatchIds } = await Swal.fire({
+                title: 'Select Match Times', html: slotsHtml, background: '#161d2f', color: '#fff', showCancelButton: true, confirmButtonText: 'Proceed to Pay',
+                preConfirm: () => {
+                    const selected = Array.from(document.querySelectorAll('.match-checkbox:checked')).map(el => el.value);
+                    if (selected.length === 0) Swal.showValidationMessage('Please select at least one match!');
+                    return selected;
+                }
+            });
+
+            if (!selectedMatchIds) return;
+
+            let totalAmount = 0;
+            selectedMatchIds.forEach(id => { totalAmount += (parseFloat(allMatches[id].fee) * totalSlotsToBuy); });
+
+            if (currentUser && totalBalance >= totalAmount) {
+                const { isConfirmed } = await Swal.fire({ title: 'Confirm Booking', text: `Your Total Balance: ৳${totalBalance}. Deduct ৳${totalAmount} for entry fee?`, icon: 'question', background: '#161d2f', color: '#fff', showCancelButton: true, confirmButtonText: 'Pay from Wallet', cancelButtonText: 'Cancel' });
+                if (isConfirmed) {
+                    Swal.fire({ title: 'Booking...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                    try {
+                        let nwDeduct = Math.min(nonWithdrawableBalance, totalAmount);
+                        let wDeduct = totalAmount - nwDeduct;
+                        
+                        let updates = {};
+                        if(nwDeduct > 0) updates[`users/${currentUser.uid}/wallet/nonWithdrawableBalance`] = nonWithdrawableBalance - nwDeduct;
+                        if(wDeduct > 0) updates[`users/${currentUser.uid}/wallet/balance`] = walletBalance - wDeduct;
+                        
+                        await db.ref().update(updates);
+                        
+                        let totalSlotsAdded = selectedMatchIds.length * totalSlotsToBuy;
+                        await db.ref(`users/${currentUser.uid}/wallet/history`).push({ type: 'Slot Booking', amount: totalAmount, time: Date.now(), status: 'Deducted', slotsCount: totalSlotsAdded });
+
+                        const today = new Date();
+                        const dateStr = today.getDate() + ' ' + today.toLocaleString('default', { month: 'short' }).toUpperCase() + ' ' + today.getFullYear();
+                        const joinTimestamp = new Date().getTime() + serverTimeOffset;
+
+                        let updatesToPurchased = {};
+
+                        for (const mId of selectedMatchIds) {
+                            for (const t of teamsData) {
+                                const newReg = { team: t.squadName, playerLength: t.playerName, status: 'Paid(Wallet)', time: Date.now(), isFake: false, uid: currentUser.uid };
+                                
+                                const regSnap = await db.ref(`registrations/${mId}`).once('value');
+                                let fakeKeyToRemove = null;
+                                let currentTotal = 0;
+                                regSnap.forEach(r => {
+                                    currentTotal++;
+                                    if (r.val().isFake && !fakeKeyToRemove) fakeKeyToRemove = r.key;
+                                });
+
+                                if (currentTotal >= 10 && fakeKeyToRemove) {
+                                    let updatesFake = {};
+                                    updatesFake[fakeKeyToRemove] = null;
+                                    const newRefKey = db.ref(`registrations/${mId}`).push().key;
+                                    updatesFake[newRefKey] = newReg;
+                                    await db.ref(`registrations/${mId}`).update(updatesFake);
+                                } else {
+                                    await db.ref(`registrations/${mId}`).push(newReg);
+                                    await db.ref(`matches/${mId}/slots`).transaction(s => (s || 0) + 1);
+                                }
+                            }
+                            const mSnap = await db.ref(`matches/${mId}`).once('value');
+                            const mVal = mSnap.val() || {};
+                            
+                            updatesToPurchased[`users/${currentUser.uid}/purchasedSlots/${mId}`] = {
+                                matchId: mId,
+                                time: mVal.time,
+                                date: dateStr,
+                                whatsappGroupLink: mVal.whatsappLink || '#',
+                                joinMessage: mVal.joinMessage || 'WhatsApp Group Link',
+                                joinStatus: 'Joined',
+                                joinedAt: joinTimestamp,
+                                teamName: teamsData[0].squadName
+                            };
+                        }
+                        
+                        await db.ref().update(updatesToPurchased);
+                        
+                        loadMatches(category);
+                        updateJoinedUI();
+                        Swal.fire({ title: '✅ সফল!', text: 'ওয়ালেট থেকে পেমেন্ট করে জয়েন সফল হয়েছে।', icon: 'success', background: '#161d2f', color: '#fff' });
+                        return; 
+                    } catch (error) {
+                        console.error(error);
+                        Swal.fire({ icon: 'error', title: 'ত্রুটি হয়েছে!', text: error.message, background: '#161d2f', color: '#fff' });
+                        return;
+                    }
+                } else { return; }
+            }
+
+            Swal.close();
+            window.currentPaymentContext = {
+                type: 'slot',
+                amount: totalAmount,
+                payload: {
+                    matchIds: selectedMatchIds,
+                    teams: teamsData,
+                    totalSlotsToBuy: totalSlotsToBuy
+                }
+            };
+            showPaymentMethodSelection();
+        };
+
+        window.showPaymentMethodSelection = function(skipPushState) {
+            if (!window.currentPaymentContext) return;
+            let amount = window.currentPaymentContext.amount;
+            
+            if (skipPushState !== true) {
+                window.history.pushState({view: 'manual-payment'}, '');
+            }
+            window.currentPaymentContext.step = 'method';
+
+            let displayTitle = BRAND_NAME;
+            let displayLogo = BRAND_LOGO;
+
+            let supportNumber = settings.supportNumber || "8801823010953";
+
+            if(document.getElementById('verifying-payment-view')) document.getElementById('verifying-payment-view').style.display = 'none';
+            document.getElementById('home-view').style.display = 'none';
+            document.getElementById('match-view').style.display = 'none';
+            document.getElementById('add-money-view').style.display = 'none';
+            document.getElementById('withdraw-view').style.display = 'none';
+            document.getElementById('auth-view').style.display = 'none';
+            document.getElementById('profile-view').style.display = 'none';
+            document.getElementById('wallet-view').style.display = 'none';
+            document.getElementById('manual-payment-view').style.display = 'block';
+
+            let bkashLogo = settings.bkashLogo || settings.bKashLogo || "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/BKash_Logo.svg/1200px-BKash_Logo.svg.png";
+            let nagadLogo = settings.nagadLogo || "https://upload.wikimedia.org/wikipedia/bn/thumb/6/64/Nagad_Logo_2020.svg/1200px-Nagad_Logo_2020.svg.png";
+            let rocketLogo = settings.rocketLogo || "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Rocket_Logo.svg/1200px-Rocket_Logo.svg.png";
+
+            let paymentHeaderHtml = `
+                <img src="${displayLogo}" style="width: 70px; height: 70px; border-radius: 50%; object-fit: contain; background: #fff; padding: 10px; border: 3px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 15px;">
+                <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 25px; color: #1a202c;">${displayTitle}</h3>
+                <div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 25px;">
+                    <a href="tel:+${supportNumber}" style="width: 45px; height: 45px; border-radius: 12px; background: #fff; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.05); color: #3b82f6; font-size: 20px;"><i class="fas fa-headset"></i></a>
+                    <a href="https://wa.me/${supportNumber}" target="_blank" style="width: 45px; height: 45px; border-radius: 12px; background: #fff; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.05); color: #22c55e; font-size: 24px;"><i class="fab fa-whatsapp"></i></a>
+                    <a href="tel:+${supportNumber}" style="width: 45px; height: 45px; border-radius: 12px; background: #fff; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.05); color: #3b82f6; font-size: 20px;"><i class="fas fa-phone-alt"></i></a>
+                </div>
+            `;
+
+            document.getElementById('manual-payment-container').innerHTML = `
+                <div style="background: #f4f8fb; border-radius: 16px; padding: 30px 20px; text-align: center; color: #1a202c; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+                    ${paymentHeaderHtml}
+                    <div style="background: #2563eb; color: white; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 14px; margin-bottom: 15px;">
+                        Mobile Banking
+                    </div>
+                    <div style="display: flex; justify-content: space-between; gap: 10px; margin-bottom: 20px;">
+                        <div onclick="showManualPayment('bKash')" style="flex: 1; background: #fff; border-radius: 10px; padding: 15px 10px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: 0.3s; height: 60px; display: flex; align-items: center; justify-content: center;">
+                            <img src="${bkashLogo}" onerror="this.replaceWith(document.createTextNode('bKash'))" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                        </div>
+                        <div onclick="showManualPayment('Rocket')" style="flex: 1; background: #fff; border-radius: 10px; padding: 15px 10px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: 0.3s; height: 60px; display: flex; align-items: center; justify-content: center;">
+                            <img src="${rocketLogo}" onerror="this.replaceWith(document.createTextNode('Rocket'))" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                        </div>
+                        <div onclick="showManualPayment('Nagad')" style="flex: 1; background: #fff; border-radius: 10px; padding: 15px 10px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: 0.3s; height: 60px; display: flex; align-items: center; justify-content: center;">
+                            <img src="${nagadLogo}" onerror="this.replaceWith(document.createTextNode('Nagad'))" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                        </div>
+                    </div>
+                    <div style="background: #dbeafe; color: #1e40af; padding: 16px; border-radius: 12px; font-weight: 800; font-size: 16px;">
+                        Pay ${amount} BDT
+                    </div>
+                </div>
+            `;
+        };
+
+        window.showManualPayment = function(method) {
+            if (!window.currentPaymentContext) return;
+            window.history.pushState({view: 'manual-payment-details'}, '');
+            window.currentPaymentContext.step = 'details';
+            window.currentPaymentContext.method = method;
+            let amount = window.currentPaymentContext.amount;
+            let adminNumber = '';
+            let themeColor = '';
+            let ussd = '';
+            let logoSrc = '';
+
+            let displayTitle = BRAND_NAME;
+            let displayLogo = BRAND_LOGO;
+
+            let supportNumber = settings.supportNumber || "8801823010953";
+
+            if (method === 'bKash') {
+                adminNumber = (settings.payNumbers && settings.payNumbers.bkash) || '01823010953';
+                themeColor = '#e2136e';
+                ussd = '*247#';
+                logoSrc = settings.bkashLogo || settings.bKashLogo || 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/BKash_Logo.svg/1200px-BKash_Logo.svg.png';
+            } else if (method === 'Nagad') {
+                adminNumber = (settings.payNumbers && settings.payNumbers.nagad) || '01823010953';
+                themeColor = '#ed1c24';
+                ussd = '*167#';
+                logoSrc = settings.nagadLogo || 'https://upload.wikimedia.org/wikipedia/bn/thumb/6/64/Nagad_Logo_2020.svg/1200px-Nagad_Logo_2020.svg.png';
+            } else if (method === 'Rocket') {
+                adminNumber = (settings.payNumbers && settings.payNumbers.rocket) || '01823010953';
+                themeColor = '#8c1596';
+                ussd = '*322#';
+                logoSrc = settings.rocketLogo || 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Rocket_Logo.svg/1200px-Rocket_Logo.svg.png';
+            }
+
+            let paymentHeaderHtml = `
+                <img src="${displayLogo}" style="width: 70px; height: 70px; border-radius: 50%; object-fit: contain; background: #fff; padding: 10px; border: 3px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 15px;">
+                <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 25px; color: #1a202c;">${displayTitle}</h3>
+                <div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 25px;">
+                    <a href="tel:+${supportNumber}" style="width: 45px; height: 45px; border-radius: 12px; background: #fff; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.05); color: #3b82f6; font-size: 20px;"><i class="fas fa-headset"></i></a>
+                    <a href="https://wa.me/${supportNumber}" target="_blank" style="width: 45px; height: 45px; border-radius: 12px; background: #fff; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.05); color: #22c55e; font-size: 24px;"><i class="fab fa-whatsapp"></i></a>
+                    <a href="tel:+${supportNumber}" style="width: 45px; height: 45px; border-radius: 12px; background: #fff; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.05); color: #3b82f6; font-size: 20px;"><i class="fas fa-phone-alt"></i></a>
+                </div>
+            `;
+
+            document.getElementById('manual-payment-container').innerHTML = `
+                <div style="background: #f4f8fb; border-radius: 16px; padding: 30px 20px; text-align: center; color: #1a202c; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.5); margin-bottom: 15px;">
+                    ${paymentHeaderHtml}
+                    
+                    <div style="background:#fff; border-radius:15px; overflow:hidden; text-align:left;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; border-bottom:1px solid #f1f1f1;">
+                            <img src="${logoSrc}" onerror="this.replaceWith(document.createTextNode('${method}'))" style="height:35px; width:auto; max-width:100px; object-fit:contain;">
+                            <b style="font-size:20px; color:#333;">৳${amount}.00</b>
+                        </div>
+                        <div style="background:#fefce8; color:#a16207; font-size:12px; padding:8px; text-align:center;">
+                            ${settings.manualPayment !== false ? '<b>নোট:</b> টাকা পাঠিয়ে Transaction ID দিন। অ্যাডমিন যাচাই করে কনফার্ম করবেন।' : '<b>নোট:</b> টাকা পাঠানোর ৫-১০ সেকেন্ড পর ভেরিফাই করবেন।'}
+                        </div>
+                        <div style="background:${themeColor}; color:#fff; padding:20px; text-align:left;">
+                            <div style="text-align:center; margin-bottom:15px;">
+                                <p style="margin-bottom:8px; font-weight:bold;">ট্রানজেকশন আইডি দিন</p>
+                                <input id="pay-txid" placeholder="ট্রানজেকশন আইডি দিন" style="width:100%; padding:12px; border-radius:8px; border:none; outline:none; font-size:15px; text-align:center; color:#333; font-weight:bold; letter-spacing:1px;">
+                            </div>
+                            <h4 style="margin-bottom:10px; font-size:14px; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:5px;">INSTRUCTIONS</h4>
+                            <ul style="list-style:none; padding:0; font-size:13px; line-height:2.2;">
+                                <li>• <b>${ussd}</b> ডায়াল করে আপনার <b>${method.toUpperCase()}</b> মোবাইল মেনুতে যান অথবা অ্যাপে যান।</li>
+                                <li>• <b>"Send Money"</b> নির্বাচন করুন।</li>
+                                <li>• প্রাপক নম্বর: <b style="color:#ffeb3b; font-size:16px;">${adminNumber}</b> <button onclick="copyToClipboard('${adminNumber}')" style="background:rgba(0,0,0,0.3); color:#fff; border:none; padding:3px 10px; border-radius:5px; font-size:11px; cursor:pointer; margin-left:5px;"><i class="fas fa-copy"></i> Copy</button></li>
+                                <li>• টাকার পরিমাণ: <b style="font-size:15px;">${amount}</b></li>
+                                <li>• <b>PIN</b> দিয়ে নিশ্চিত করুন।</li>
+                                <li>• একটি নিশ্চিতকরণ <b>SMS</b> পাবেন।</li>
+                                <li>• উপরের বক্সে আপনার <b>Transaction ID</b> দিন এবং <b>VERIFY</b> করুন।</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <button onclick="submitManualPayment()" style="width:100%; margin-top:15px; padding:14px; font-size:16px; border-radius:10px; border:none; font-weight:bold; cursor:pointer; background:${themeColor}; color:white;">${settings.manualPayment !== false ? 'SUBMIT PAYMENT' : 'VERIFY TRANSACTION'}</button>
+                </div>
+            `;
+        };
+
+        function triggerAutoVerify(kind, id) {
+            if (!currentUser) return;
+            currentUser.getIdToken().then(function(t) {
+                fetch('/.netlify/functions/verify-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: kind, id: id, token: t }) }).catch(function() {});
+            });
+        }
+
+        async function submitManualRequest(txid, requiredAmount) {
+            const ctx = window.currentPaymentContext;
+            if (!currentUser) {
+                Swal.fire({icon: 'error', title: 'লগইন প্রয়োজন', text: 'পেমেন্টের জন্য লগইন করতে হবে।', background: '#161d2f', color: '#fff'});
+                return;
+            }
+            try {
+                Swal.fire({ title: 'পাঠানো হচ্ছে...', background: '#161d2f', color: '#fff', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                if (ctx.type === 'add_money') {
+                    const historyRef = db.ref(`users/${currentUser.uid}/wallet/history`).push();
+                    await historyRef.set({ type: 'Add Money', amount: parseFloat(requiredAmount), time: Date.now(), status: 'Pending', trxId: txid });
+                    await db.ref('deposit_requests').push({
+                        uid: currentUser.uid,
+                        name: currentUser.displayName || 'User',
+                        amount: parseFloat(requiredAmount),
+                        trxId: txid,
+                        method: ctx.method,
+                        status: 'Pending',
+                        time: Date.now(),
+                        req_time: Date.now(),
+                        manual: true,
+                        historyKey: historyRef.key
+                    });
+                } else {
+                    const p = ctx.payload;
+                    await db.ref('slot_requests').push({
+                        uid: currentUser.uid,
+                        name: currentUser.displayName || 'User',
+                        squadName: p.teams.map(t => t.squadName).join(', '),
+                        team: p.teams.map(t => t.squadName).join(', '),
+                        playerName: p.teams.map(t => t.playerName).join(', '),
+                        amount: parseFloat(requiredAmount),
+                        trxId: txid,
+                        method: ctx.method,
+                        matchIds: p.matchIds,
+                        status: 'Pending',
+                        time: Date.now(),
+                        req_time: Date.now(),
+                        slotCount: p.totalSlotsToBuy,
+                        teamsData: p.teams,
+                        manual: true
+                    });
+                }
+                window.currentPaymentContext = null;
+                document.getElementById('manual-payment-view').style.display = 'none';
+                if (ctx.type === 'add_money') document.getElementById('wallet-view').style.display = 'block';
+                else document.getElementById('match-view').style.display = 'block';
+                Swal.fire({icon: 'success', title: 'রিকোয়েস্ট জমা হয়েছে', text: 'অ্যাডমিন পেমেন্ট ভেরিফাই করলে ' + (ctx.type === 'add_money' ? 'আপনার ব্যালেন্স যোগ হবে।' : 'আপনার স্লট কনফার্ম হবে।'), background: '#161d2f', color: '#fff'});
+            } catch (e) {
+                Swal.fire({icon: 'error', title: 'Error', text: e.message, background: '#161d2f', color: '#fff'});
+            }
+        }
+
+        window.submitManualPayment = async function() {
+            if (!window.currentPaymentContext) return;
+            let txid = document.getElementById('pay-txid').value.trim();
+            if(!txid) { Swal.fire({icon: 'warning', title: 'Error', text: 'Transaction ID দিন!', background: '#161d2f', color: '#fff'}); return false; }
+
+            let requiredAmount = window.currentPaymentContext.amount;
+            let method = window.currentPaymentContext.method;
+
+
+            if (settings.manualPayment !== false) { return submitManualRequest(txid, requiredAmount); }
+            try {
+                document.getElementById('manual-payment-view').style.display = 'none';
+                let verifyView = document.getElementById('verifying-payment-view');
+                if (verifyView) {
+                    verifyView.style.display = 'flex';
+                    document.getElementById('verify-header-wallet').innerText = parseFloat(totalBalance).toFixed(2);
+                    const avatarImg = document.querySelector('.user-avatar');
+                    document.getElementById('verify-header-avatar').src = avatarImg ? avatarImg.src : '';
+                }
+
+                let timeLeft = 30;
+                let timerEl = document.getElementById('verify-page-timer');
+                if(timerEl) timerEl.innerText = timeLeft;
+                let countInt = setInterval(() => {
+                    timeLeft--;
+                    if(timerEl) timerEl.innerText = timeLeft;
+                    if(timeLeft <= 0) clearInterval(countInt);
+                }, 1000);
+
+                if (window.currentPaymentContext.type === 'add_money') {
+                    const uid = window.currentPaymentContext.payload.uid;
+                    if (!uid || uid === 'Guest') {
+                        clearInterval(countInt);
+                        verifyView.style.display = 'none';
+                        document.getElementById('manual-payment-view').style.display = 'block';
+                        return Swal.fire({icon: 'error', title: 'লগইন প্রয়োজন', text: 'অ্যাড মানি করার জন্য লগইন করতে হবে।', background: '#161d2f', color: '#fff'});
+                    }
+
+                    const reqRef = db.ref('deposit_requests').push();
+                    const reqKey = reqRef.key;
+
+                    await reqRef.set({
+                        uid: uid,
+                        name: currentUser ? currentUser.displayName : 'User',
+                        amount: parseFloat(requiredAmount),
+                        trxId: txid,
+                        method: window.currentPaymentContext.method,
+                        status: 'Pending',
+                        time: Date.now(),
+                        req_time: Date.now()
+                    });
+                    
+                    const historyRef = db.ref(`users/${uid}/wallet/history`).push();
+                    await historyRef.set({ type: 'Add Money', amount: parseFloat(requiredAmount), time: Date.now(), status: 'Pending', trxId: txid });
+                    triggerAutoVerify('deposit', reqKey);
+
+                    let isResolved = false;
+                    
+                    let timeout = setTimeout(() => {
+                        if(!isResolved) {
+                            isResolved = true;
+                            db.ref(`deposit_requests/${reqKey}`).update({ status: 'Failed_Timeout' }); 
+                            db.ref(`deposit_requests/${reqKey}`).off();
+                            historyRef.update({status: 'Failed'}); 
+                            
+                            verifyView.style.display = 'none';
+                            document.getElementById('manual-payment-view').style.display = 'block';
+                            
+                            Swal.fire({icon: 'error', title: 'টাইমআউট', text: '৩০ সেকেন্ডের মধ্যে বট রেসপন্স করেনি। রিকোয়েস্টটি বাতিল করা হলো।', background: '#161d2f', color: '#fff'});
+                        }
+                    }, 30000);
+
+                    db.ref(`deposit_requests/${reqKey}`).on('value', (snap) => {
+                        if (isResolved) return;
+                        if (!snap.exists()) {
+                            isResolved = true;
+                            clearTimeout(timeout);
+                            db.ref(`deposit_requests/${reqKey}`).off();
+                            historyRef.remove(); 
+                            
+                            verifyView.style.display = 'none';
+                            document.getElementById('wallet-view').style.display = 'block';
+                            window.currentPaymentContext = null;
+                            
+                            Swal.fire({icon: 'success', title: '✅ সফল!', text: 'আপনার ব্যালেন্স অ্যাড হয়েছে।', background: '#161d2f', color: '#fff'});
+                        } else {
+                            let data = snap.val();
+                            if (data.status === 'Completed' || data.status === 'Approved' || data.status === 'Success') {
+                                isResolved = true;
+                                clearTimeout(timeout);
+                                db.ref(`deposit_requests/${reqKey}`).off();
+                                historyRef.remove(); 
+                                
+                                verifyView.style.display = 'none';
+                                document.getElementById('wallet-view').style.display = 'block';
+                                window.currentPaymentContext = null;
+                                
+                                Swal.fire({icon: 'success', title: '✅ সফল!', text: 'আপনার ব্যালেন্স অ্যাড হয়েছে।', background: '#161d2f', color: '#fff'});
+                            } else if (data.status && (data.status.includes('Failed') || data.status.includes('Cancel'))) {
+                                isResolved = true;
+                                clearTimeout(timeout);
+                                db.ref(`deposit_requests/${reqKey}`).off();
+                                historyRef.update({status: 'Failed'}); 
+                                
+                                verifyView.style.display = 'none';
+                                document.getElementById('manual-payment-view').style.display = 'block';
+                                
+                                let errorMsg = 'অলরেডি ইউজড বা বাতিল করা হয়েছে।';
+                                if (data.status.includes('Slots Full')) {
+                                    errorMsg = 'ম্যাচে জায়গা শেষ! আপনার টাকা স্লট-ব্যালেন্সে যোগ হয়েছে।';
+                                } else if (data.status.includes('Method Mismatch')) {
+                                    errorMsg = 'ভুল মেথড! সঠিক পেমেন্ট মেথড (যেমন: বিকাশ/নগদ) সিলেক্ট করে চেষ্টা করুন।';
+                                } else if (data.status.includes('Invalid/Used')) {
+                                    errorMsg = 'এই ট্রানজেকশন আইডিটি অলরেডি ইউজড বা অ্যামাউন্ট ভুল!';
+                                } else if (data.status.includes('Not Found')) {
+                                    errorMsg = 'ট্রানজেকশন আইডি পাওয়া যায়নি! অনুগ্রহ করে সঠিক আইডি দিন।';
+                                } else if (data.status.includes('Multiple Requests')) {
+                                    errorMsg = 'আপনি একসাথে অনেকগুলো রিকোয়েস্ট পাঠিয়েছেন। কিছুক্ষণ অপেক্ষা করুন!';
+                                }
+                                
+                                Swal.fire({icon: 'error', title: 'ব্যর্থ হয়েছে', text: errorMsg, background: '#161d2f', color: '#fff'});
+                            }
+                        }
+                    });
+
+                } else if (window.currentPaymentContext.type === 'slot') {
+                    const p = window.currentPaymentContext.payload;
+                    const reqRef = db.ref('slot_requests').push();
+                    const reqKey = reqRef.key;
+
+                    let combinedSquads = p.teams.map(t => t.squadName).join(', ');
+                    let combinedPlayers = p.teams.map(t => t.playerName).join(', ');
+
+                    await reqRef.set({
+                        uid: currentUser ? currentUser.uid : 'Guest',
+                        squadName: combinedSquads,
+                        team: combinedSquads,
+                        playerName: combinedPlayers,
+                        amount: parseFloat(requiredAmount),
+                        trxId: txid,
+                        method: window.currentPaymentContext.method, 
+                        matchIds: p.matchIds,
+                        status: 'Pending',
+                        time: Date.now(),
+                        req_time: Date.now(),
+                        slotCount: p.totalSlotsToBuy,
+                        teamsData: p.teams
+                    });
+                    triggerAutoVerify('slot', reqKey);
+
+                    let isResolved = false;
+                    
+                    let timeout = setTimeout(() => {
+                        if(!isResolved) {
+                            isResolved = true;
+                            db.ref(`slot_requests/${reqKey}`).update({ status: 'Failed_Timeout' });
+                            db.ref(`slot_requests/${reqKey}`).off();
+                            
+                            verifyView.style.display = 'none';
+                            document.getElementById('manual-payment-view').style.display = 'block';
+                            Swal.fire({icon: 'error', title: 'টাইমআউট', text: '৩০ সেকেন্ডের মধ্যে বট রেসপন্স করেনি। রিকোয়েস্টটি বাতিল করা হলো।', background: '#161d2f', color: '#fff'});
+                        }
+                    }, 30000); 
+
+                    db.ref(`slot_requests/${reqKey}`).on('value', async (snap) => {
+                        if (isResolved) return;
+                        if (snap.exists()) {
+                            let data = snap.val();
+                            
+                            if (data.status === 'Completed' || data.status === 'Success' || data.status === 'Approved') {
+                                isResolved = true;
+                                clearTimeout(timeout);
+                                db.ref(`slot_requests/${reqKey}`).off();
+
+                                const today = new Date();
+                                const dateStr = today.getDate() + ' ' + today.toLocaleString('default', { month: 'short' }).toUpperCase() + ' ' + today.getFullYear();
+                                const joinTimestamp = new Date().getTime() + serverTimeOffset;
+
+                                let updatesToPurchased = {};
+
+                                for (const mId of p.matchIds) {
+                                    const mSnap = await db.ref(`matches/${mId}`).once('value');
+                                    if (mSnap.exists()) {
+                                        const mVal = mSnap.val();
+                                        updatesToPurchased[`users/${currentUser.uid}/purchasedSlots/${mId}`] = {
+                                            matchId: mId,
+                                            time: mVal.time,
+                                            date: dateStr,
+                                            whatsappGroupLink: mVal.whatsappLink || '#',
+                                            joinMessage: mVal.joinMessage || 'WhatsApp Group Link',
+                                            joinStatus: 'Joined',
+                                            joinedAt: joinTimestamp,
+                                            teamName: combinedSquads
+                                        };
+                                    }
+                                }
+                                
+                                await db.ref().update(updatesToPurchased);
+                                
+                                let currentCat = document.getElementById('cat-title').innerText;
+                                if(currentCat) loadMatches(currentCat);
+                                updateJoinedUI();
+
+                                verifyView.style.display = 'none';
+                                document.getElementById('match-view').style.display = 'block';
+                                window.currentPaymentContext = null; 
+
+                                Swal.fire({ title: '✅ জয়েন সফল!', text: 'অটো-বট আপনার পেমেন্ট কনফার্ম করেছে!', icon: 'success', background: '#161d2f', color: '#fff' });
+                                
+                                db.ref(`slot_requests/${reqKey}`).remove();
+                                
+                            } else if (data.status && (data.status.includes('Failed') || data.status.includes('Cancel'))) {
+                                isResolved = true;
+                                clearTimeout(timeout);
+                                db.ref(`slot_requests/${reqKey}`).off();
+                                
+                                verifyView.style.display = 'none';
+                                document.getElementById('manual-payment-view').style.display = 'block';
+                                
+                                let errorMsg = 'পেমেন্ট ভুল, অলরেডি ইউজড বা ট্রানজেকশন আইডি পাওয়া যায়নি!';
+                                if (data.status.includes('Slots Full')) {
+                                    errorMsg = 'ম্যাচে জায়গা শেষ! আপনার টাকা স্লট-ব্যালেন্সে যোগ হয়েছে।';
+                                } else if (data.status.includes('Method Mismatch')) {
+                                    errorMsg = 'ভুল মেথড! সঠিক পেমেন্ট মেথড (যেমন: বিকাশ/নগদ) সিলেক্ট করে চেষ্টা করুন।';
+                                } else if (data.status.includes('Invalid/Used')) {
+                                    errorMsg = 'এই ট্রানজেকশন আইডিটি অলরেডি ইউজড বা অ্যামাউন্ট ভুল!';
+                                } else if (data.status.includes('Not Found')) {
+                                    errorMsg = 'ট্রানজেকশন আইডি পাওয়া যায়নি! অনুগ্রহ করে সঠিক আইডি দিন।';
+                                } else if (data.status.includes('Multiple Requests')) {
+                                    errorMsg = 'আপনি একসাথে অনেকগুলো রিকোয়েস্ট পাঠিয়েছেন। কিছুক্ষণ অপেক্ষা করুন!';
+                                }
+                                
+                                Swal.fire({icon: 'error', title: 'ব্যর্থ হয়েছে', text: errorMsg, background: '#161d2f', color: '#fff'});
+                            }
+                        }
+                    });
+                }
+
+            } catch(e) {
+                console.error(e);
+                let verifyView = document.getElementById('verifying-payment-view');
+                if (verifyView) verifyView.style.display = 'none';
+                document.getElementById('manual-payment-view').style.display = 'block';
+                Swal.fire({icon: 'error', title: 'Error', text: e.message, background: '#161d2f', color: '#fff'});
+            }
+        };
+
+        window.closeManualPaymentView = function() {
+            if(document.getElementById('verifying-payment-view')) document.getElementById('verifying-payment-view').style.display = 'none';
+            document.getElementById('manual-payment-view').style.display = 'none';
+            if (window.currentPaymentContext && window.currentPaymentContext.type === 'add_money') {
+                 document.getElementById('wallet-view').style.display = 'block';
+            } else {
+                 document.getElementById('match-view').style.display = 'block';
+            }
+            window.currentPaymentContext = null;
+        };
+
+        window.updateTotalFee = function() {
+            let total = 0;
+            document.querySelectorAll('.match-checkbox:checked').forEach(el => { total += parseFloat(el.getAttribute('data-fee')); });
+            document.getElementById('total-fee-display').innerText = "Total Fee: ৳" + total;
+        };
+
+        window.viewSlots = function(id) {
+            db.ref('registrations/'+id).once('value', snap => {
+                let html = '<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">';
+                let i = 1;
+                if (!snap.exists()) html = '<p>No teams yet.</p>';
+                else snap.forEach(c => { html += `<div style="background:#253040; padding:10px; border-radius:10px;">${i++}. ${c.val().team}</div>`; });
+                openModal("📋 SLOT LIST", html + '</div>');
+            });
+        };
+        
+        window.viewRules = function(id) { 
+            db.ref('matches/'+id).once('value', s => { 
+                let match = s.val() || {};
+                let text = match.rules || match.Rules || 'No rules defined.'; 
+                openModal("📜 RULES", `<div style="white-space:pre-wrap; text-align:left; padding:5px; line-height:1.5; color:#cbd5e0;">${text}</div>`); 
+            }); 
+        };
+        
+        window.viewPrize = function(id) { 
+            db.ref('matches/'+id).once('value', snap => {
+                let match = snap.val() || {};
+                let html = '';
+                let p = match.prizeList || match.PrizeList || match.prize || match.Prize;
+                if (typeof p === 'string' || typeof p === 'number') { html = `<div style="white-space:pre-wrap; text-align:left; padding:5px; line-height:1.5; color:#cbd5e0;">${p}</div>`; } 
+                else if (p && typeof p === 'object') { 
+                    let pNode = snap.child('prizeList').exists() ? snap.child('prizeList') : snap.child('prize');
+                    if(!pNode.exists() && snap.child('Prize').exists()) pNode = snap.child('Prize');
+                    pNode.forEach(c => { html += `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #333;"><span>${c.val().rank || ''}</span><b>৳${c.val().amount || ''}</b></div>`; }); 
+                } 
+                openModal("🏆 PRIZE", html || 'TBD');
+            });
+        };
+        
+        window.openModal = function(title, body) { 
+            document.getElementById('modal-title').innerText = title; 
+            document.getElementById('modal-body').innerHTML = body; 
+            document.getElementById('mainModal').style.display = 'flex'; 
+        };
+        
+        window.closeModal = function() { 
+            document.getElementById('mainModal').style.display = 'none'; 
+            if (window.currentManageModalRef && window.currentManageModalListener) {
+                window.currentManageModalRef.off('value', window.currentManageModalListener);
+                window.currentManageModalRef = null;
+                window.currentManageModalListener = null;
+            }
+        };
+
+        let activeRegListeners = {};
+
+        function setupRegistrationListener(matchId) {
+            let refPath = `registrations/${matchId}`;
+            if (!activeRegListeners[refPath]) {
+                let listener = db.ref(refPath).on('value', (snap) => {
+                    if(!currentUser) return;
+                    let userStillJoined = false;
+                    let cancelStatusToUpdate = null;
+                    let m = userJoinedMatches[matchId];
+                    let purchasedTeam = m ? (m.teamName || m.squadName) : null;
+
+                    snap.forEach(child => {
+                        let val = child.val();
+                        if (val) {
+                            if (val.uid === currentUser.uid || val.userId === currentUser.uid) {
+                                userStillJoined = true;
+                                if(val.cancelStatus) cancelStatusToUpdate = val.cancelStatus;
+                            } else if (purchasedTeam && val.team && val.team.toLowerCase() === purchasedTeam.toLowerCase()) {
+                                userStillJoined = true;
+                                if(val.cancelStatus) cancelStatusToUpdate = val.cancelStatus;
+                            }
+                        }
+                    });
+
+                    if (!userStillJoined) {
+                        let now = new Date().getTime() + serverTimeOffset;
+                        let timeSinceJoin = m && m.joinedAt ? (now - m.joinedAt) : (24 * 60 * 60 * 1000);
+                        
+                        if (timeSinceJoin > 5 * 60 * 1000) {
+                            db.ref(`users/${currentUser.uid}/purchasedSlots/${matchId}`).remove();
+                            db.ref(refPath).off('value', listener);
+                            delete activeRegListeners[refPath];
+                            
+                            let catTitle = document.getElementById('cat-title').innerText;
+                            if (document.getElementById('match-view').style.display === 'block' && catTitle) {
+                                loadMatches(catTitle);
+                            }
+                        }
+                    } else if (m && cancelStatusToUpdate) {
+                        userJoinedMatches[matchId].cancelStatus = cancelStatusToUpdate;
+                    }
+                });
+                activeRegListeners[refPath] = listener;
+            }
+        }
+
+        window.updateJoinedUI = async function() {
+            if (!currentUser) {
+                for (let key in activeRegListeners) {
+                    db.ref(key).off('value', activeRegListeners[key]);
+                }
+                activeRegListeners = {};
+                return;
+            }
+
+            let joinedKeys = Object.keys(userJoinedMatches);
+            const section = document.getElementById('joined-team-section');
+            if (section) section.style.display = 'none';
+
+            if (joinedKeys.length === 0) {
+                for (let key in activeRegListeners) {
+                    db.ref(key).off('value', activeRegListeners[key]);
+                }
+                activeRegListeners = {};
+                return;
+            }
+
+            let now = new Date().getTime() + serverTimeOffset;
+            
+            const fetchPromises = joinedKeys.map(async (mId) => {
+                let m = userJoinedMatches[mId];
+                
+                try {
+                    let matchSnap = await db.ref(`matches/${mId}`).once('value');
+                    if (!matchSnap.exists()) {
+                        db.ref(`users/${currentUser.uid}/purchasedSlots/${mId}`).remove();
+                        return;
+                    }
+                    
+                    let matchData = matchSnap.val();
+                    if (isMatchArchived(matchData.date, matchData.time, matchData.isClosed)) {
+                        db.ref(`users/${currentUser.uid}/purchasedSlots/${mId}`).remove();
+                        return;
+                    }
+
+                    let regSnap = await db.ref(`registrations/${mId}`).once('value');
+                    let userStillJoined = false;
+                    let purchasedTeam = m.teamName || m.squadName || null;
+
+                    regSnap.forEach(child => {
+                        let val = child.val();
+                        if (val) {
+                            if (val.uid === currentUser.uid || val.userId === currentUser.uid) {
+                                userStillJoined = true;
+                            } else if (purchasedTeam && val.team && val.team.toLowerCase() === purchasedTeam.toLowerCase()) {
+                                userStillJoined = true;
+                            }
+                        }
+                    });
+
+                    if (userStillJoined) {
+                        setupRegistrationListener(mId);
+                    } else {
+                        let timeSinceJoin = m.joinedAt ? (now - m.joinedAt) : (24 * 60 * 60 * 1000);
+                        if (timeSinceJoin > 5 * 60 * 1000) {
+                            db.ref(`users/${currentUser.uid}/purchasedSlots/${mId}`).remove();
+                        }
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            });
+            await Promise.all(fetchPromises);
+        };
+
+    })();
+</script>
+<a class='support-box' href='https://wa.me/8801823010953' target='_blank' title='WhatsApp Support'>
+<i class='fab fa-whatsapp'></i>
+</a>
+</body>
+</html>
